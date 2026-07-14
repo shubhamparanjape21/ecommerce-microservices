@@ -1,0 +1,25 @@
+# STS / Eclipse Workspace
+.metadata/
+
+# Maven
+**/target/
+
+# Eclipse / STS
+.project
+.classpath
+.settings/
+.springBeans
+.sts4-cache/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
