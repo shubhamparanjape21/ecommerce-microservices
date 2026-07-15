@@ -1,8 +1,8 @@
 package com.japes.productservice.service;
 
-import com.japes.productservice.dto.ProductRequest;
-import com.japes.productservice.dto.ProductResponse;
+import com.japes.productservice.dto.CreateProductRequest;
+import com.japes.productservice.dto.CreateProductResponse;
 
 public interface ProductService {
-	ProductResponse createProduct(ProductRequest productRequest);
+	CreateProductResponse createProduct(CreateProductRequest productRequest);
 }
