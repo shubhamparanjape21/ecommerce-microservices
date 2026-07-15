@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import com.japes.productservice.dto.CreateProductRequest;
 import com.japes.productservice.dto.CreateProductResponse;
 import com.japes.productservice.entity.Product;
+import com.japes.productservice.exception.ProductAlreadyExistsException;
 import com.japes.productservice.repository.ProductRepository;
 import com.japes.productservice.service.ProductService;
 
@@ -19,8 +20,15 @@ public class ProductServiceImpl implements ProductService {
 
 	@Override
 	public CreateProductResponse createProduct(CreateProductRequest productRequest) {
+		
+		if(productRepository.existsBySkuCode(productRequest.getSkuCode())) {
+			throw new ProductAlreadyExistsException("Product with SKU " + productRequest.getSkuCode() + " already exists");
+		}
+		
 		Product product = modelMapper.map(productRequest, Product.class);
+		
 		Product savedProduct = productRepository.save(product);
+		
 		return modelMapper.map(savedProduct, CreateProductResponse.class);
 	}
 
