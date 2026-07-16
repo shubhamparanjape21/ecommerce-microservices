@@ -8,4 +8,5 @@ import com.japes.productservice.dto.ProductResponse;
 public interface ProductService {
 	ProductResponse saveProduct(CreateProductRequest productRequest);
 	List<ProductResponse> getProductList();
+	ProductResponse getProductById(long id);
 }

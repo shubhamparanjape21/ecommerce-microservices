@@ -1,6 +1,7 @@
 package com.japes.productservice.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import com.japes.productservice.dto.CreateProductRequest;
 import com.japes.productservice.dto.ProductResponse;
 import com.japes.productservice.entity.Product;
 import com.japes.productservice.exception.ProductAlreadyExistsException;
+import com.japes.productservice.exception.ProductNotFoundException;
 import com.japes.productservice.repository.ProductRepository;
 import com.japes.productservice.service.ProductService;
 
@@ -51,4 +53,18 @@ public class ProductServiceImpl implements ProductService {
 		return response;
 	}
 
+	@Override
+	public ProductResponse getProductById(long id) {
+		log.info("Received request to fetch product with ID {}", id);
+		log.debug("Checking whether product with ID {} exists", id);
+		Product product = productRepository.findById(id)
+				.orElseThrow(() -> {
+					log.warn("Product not found with ID {}", id);
+					return new ProductNotFoundException("Product with ID " + id + " not found");
+				});
+		log.debug("Mapping Product entity to ProductResponse");
+		ProductResponse response = modelMapper.map(product, ProductResponse.class);
+		log.info("Successfully fetched product with ID {}", id);
+		return response;
+	}
 }

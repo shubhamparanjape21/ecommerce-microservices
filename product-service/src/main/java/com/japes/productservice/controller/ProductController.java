@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,5 +37,11 @@ public class ProductController {
 		log.info("Received request to fetch all products");
 		List<ProductResponse> list = productService.getProductList();
 		return new ResponseEntity<List<ProductResponse>>(list, HttpStatus.OK);
+	}
+	
+	@GetMapping("/{id}")
+	public ResponseEntity<ProductResponse> getProductById(@PathVariable long id) {
+		ProductResponse response = productService.getProductById(id);
+		return new ResponseEntity<ProductResponse>(response, HttpStatus.OK);
 	}
 }
