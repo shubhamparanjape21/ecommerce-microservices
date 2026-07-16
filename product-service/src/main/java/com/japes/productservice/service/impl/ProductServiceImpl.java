@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.japes.productservice.dto.CreateProductRequest;
 import com.japes.productservice.dto.ProductResponse;
+import com.japes.productservice.dto.UpdateProductRequest;
 import com.japes.productservice.entity.Product;
 import com.japes.productservice.exception.ProductAlreadyExistsException;
 import com.japes.productservice.exception.ProductNotFoundException;
@@ -54,7 +55,7 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public ProductResponse getProductById(long id) {
+	public ProductResponse getProductById(Long id) {
 		log.info("Received request to fetch product with ID {}", id);
 		log.debug("Checking whether product with ID {} exists", id);
 		Product product = productRepository.findById(id)
@@ -65,6 +66,29 @@ public class ProductServiceImpl implements ProductService {
 		log.debug("Mapping Product entity to ProductResponse");
 		ProductResponse response = modelMapper.map(product, ProductResponse.class);
 		log.info("Successfully fetched product with ID {}", id);
+		return response;
+	}
+
+	@Override
+	public ProductResponse updateProduct(Long id, UpdateProductRequest updateProductRequest) {
+		log.info("Received request to update product with ID {}", id);
+		log.debug("Checking whether product with ID {} exists", id);
+		Product existingProduct = productRepository.findById(id)
+				.orElseThrow(() -> {
+					log.warn("Product not found with ID {}", id);
+					return new ProductNotFoundException("Product with ID " + id + " not found");
+				});
+		if(!existingProduct.getSkuCode().equals(updateProductRequest.getSkuCode()) && productRepository.existsBySkuCode(updateProductRequest.getSkuCode())) {
+			log.warn("Duplicate SKU {} provided for update ", updateProductRequest.getSkuCode());
+			throw new ProductAlreadyExistsException("Another product with SKU " + updateProductRequest.getSkuCode() + " already exists");
+		}
+		log.debug("Mapping UpdateProductRequest to existing product entity");
+		modelMapper.map(updateProductRequest, existingProduct);
+		log.debug("Saving updated product to database");
+		Product updatedProduct = productRepository.save(existingProduct);
+		log.debug("Mapping Product entity to ProductResponse");
+		ProductResponse response = modelMapper.map(updatedProduct, ProductResponse.class);
+		log.info("Successfully updated product with ID {}", response.getId());
 		return response;
 	}
 }

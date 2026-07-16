@@ -7,12 +7,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.productservice.dto.CreateProductRequest;
 import com.japes.productservice.dto.ProductResponse;
+import com.japes.productservice.dto.UpdateProductRequest;
 import com.japes.productservice.service.ProductService;
 
 import jakarta.validation.Valid;
@@ -42,6 +44,12 @@ public class ProductController {
 	@GetMapping("/{id}")
 	public ResponseEntity<ProductResponse> getProductById(@PathVariable long id) {
 		ProductResponse response = productService.getProductById(id);
+		return new ResponseEntity<ProductResponse>(response, HttpStatus.OK);
+	}
+	
+	@PutMapping("/update/{id}")
+	public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody @Valid UpdateProductRequest updateProductRequest) {
+		ProductResponse response = productService.updateProduct(id, updateProductRequest);
 		return new ResponseEntity<ProductResponse>(response, HttpStatus.OK);
 	}
 }
