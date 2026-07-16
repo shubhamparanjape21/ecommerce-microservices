@@ -23,7 +23,7 @@ public class ProductServiceImpl implements ProductService {
 	private final ModelMapper modelMapper;
 
 	@Override
-	public ProductResponse createProduct(CreateProductRequest productRequest) {
+	public ProductResponse saveProduct(CreateProductRequest productRequest) {
 		log.info("Creating product with SKU {}", productRequest.getSkuCode());
 		log.debug("Checking if product with SKU {} already exists", productRequest.getSkuCode());
 		if(productRepository.existsBySkuCode(productRequest.getSkuCode())) {
@@ -39,7 +39,7 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public List<ProductResponse> getAllProducts() {
+	public List<ProductResponse> getProductList() {
 		log.info("Fetching all products");
 		List<Product> products = productRepository.findAll();
 		log.debug("Retrieved {} products from database", products.size());

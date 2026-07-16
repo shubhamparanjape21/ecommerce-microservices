@@ -27,14 +27,14 @@ public class ProductController {
 	
 	@PostMapping
 	public ResponseEntity<ProductResponse> saveproduct(@RequestBody @Valid CreateProductRequest productRequest) {
-		ProductResponse createdProduct = productService.createProduct(productRequest);
+		ProductResponse createdProduct = productService.saveProduct(productRequest);
 		return new ResponseEntity<ProductResponse>(createdProduct, HttpStatus.CREATED);
 	}
 	
 	@GetMapping
 	public ResponseEntity<List<ProductResponse>> fetchAllProducts() {
 		log.info("Received request to fetch all products");
-		List<ProductResponse> list = productService.getAllProducts();
+		List<ProductResponse> list = productService.getProductList();
 		return new ResponseEntity<List<ProductResponse>>(list, HttpStatus.OK);
 	}
 }

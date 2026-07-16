@@ -6,6 +6,6 @@ import com.japes.productservice.dto.CreateProductRequest;
 import com.japes.productservice.dto.ProductResponse;
 
 public interface ProductService {
-	ProductResponse createProduct(CreateProductRequest productRequest);
-	List<ProductResponse> getAllProducts();
+	ProductResponse saveProduct(CreateProductRequest productRequest);
+	List<ProductResponse> getProductList();
 }
