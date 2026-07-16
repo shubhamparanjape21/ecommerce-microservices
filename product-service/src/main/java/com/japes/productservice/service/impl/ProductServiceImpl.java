@@ -91,4 +91,18 @@ public class ProductServiceImpl implements ProductService {
 		log.info("Successfully updated product with ID {}", response.getId());
 		return response;
 	}
+
+	@Override
+	public void deleteProduct(Long id) {
+		log.info("Received request to delete product with ID {}", id);
+		log.debug("Checking whether product with ID {} exists", id);
+		Product existingProduct = productRepository.findById(id)
+				.orElseThrow(() -> {
+					log.warn("Product not found with ID {}", id);
+					return new ProductNotFoundException("Product with ID " + id + " not found");
+				});
+		log.debug("Deleting product with ID {} from database", id);
+		productRepository.deleteById(id);
+		log.info("Product deleted successfully");
+	}
 }
