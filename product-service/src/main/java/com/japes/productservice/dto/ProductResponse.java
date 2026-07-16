@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class CreateProductResponse {
+public class ProductResponse {
 	private Long id;
 	private String skuCode;
 	private String name;
