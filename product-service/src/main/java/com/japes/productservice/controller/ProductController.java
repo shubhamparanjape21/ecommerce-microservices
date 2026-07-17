@@ -63,4 +63,11 @@ public class ProductController {
 		productService.deleteProduct(id);
 		return ResponseEntity.noContent().build();
 	}
+	
+	@GetMapping("/sku/{skuCode}")
+	public ResponseEntity<ProductResponse> getProductBySkuCode(@PathVariable String skuCode) {
+		log.info("Received request to fetch product with SKU {}", skuCode);
+		ProductResponse response = productService.getProductBySkuCode(skuCode);
+		return ResponseEntity.ok(response);
+	}
 }

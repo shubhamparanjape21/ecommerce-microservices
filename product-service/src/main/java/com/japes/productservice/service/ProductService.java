@@ -11,4 +11,5 @@ public interface ProductService {
 	ProductResponse getProductById(Long id);
 	ProductResponse updateProduct(Long id, UpdateProductRequest productRequest);
 	void deleteProduct(Long id);
+	ProductResponse getProductBySkuCode(String skuCode);
 }

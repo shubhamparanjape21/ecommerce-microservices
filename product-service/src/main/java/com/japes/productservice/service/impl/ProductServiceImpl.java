@@ -1,6 +1,7 @@
 package com.japes.productservice.service.impl;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -120,5 +121,21 @@ public class ProductServiceImpl implements ProductService {
 		log.debug("Deleting product with ID {} from database", id);
 		productRepository.deleteById(id);
 		log.info("Product deleted successfully");
+	}
+
+	@Override
+	public ProductResponse getProductBySkuCode(String skuCode) {
+		log.info("Received request to search product with SkuCode {}", skuCode);
+		log.debug("Checking whether product with SkuCode {} exists", skuCode);
+		Product product = productRepository.findBySkuCode(skuCode)
+				.orElseThrow(() -> {
+					log.warn("Product not found with SkuCode {}", skuCode);
+					return new ProductNotFoundException("Product with SkuCode " + skuCode + " not found");
+				});
+		
+		log.debug("Mapping Product entity to ProductResponse");
+		ProductResponse response = modelMapper.map(product, ProductResponse.class);
+		log.info("Successfully fetched product with SKU {}", skuCode);
+		return response;
 	}
 }
