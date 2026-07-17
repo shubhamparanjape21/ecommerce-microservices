@@ -53,15 +53,20 @@ public class ProductServiceImpl implements ProductService {
 						: Sort.by(sortBy).descending();
 		Pageable pageable = PageRequest.of(page, size, sort);
 		Page<Product> productPage = productRepository.findAll(pageable);
+		log.debug("Retrieved {} products from database", productPage.getNumberOfElements());
 		log.debug("Mapping Product entities to ProductResponse DTOs");
 		List<ProductResponse> responses = productPage.getContent()
 					.stream()
 					.map(product ->
 							modelMapper.map(product, ProductResponse.class))
 					.toList();
-		log.debug("Retrieved {} products from database", responses.size());
 		ProductPageResponse response = new ProductPageResponse(responses,productPage.getNumber(),productPage.getTotalPages(),productPage.getTotalElements(),productPage.getSize(),productPage.isFirst(),productPage.isLast());
-		log.debug("Retrieved {} products from database", productPage.getNumberOfElements());
+		log.info(
+			    "Successfully fetched {} products (page {} of {})",
+			    productPage.getNumberOfElements(),
+			    productPage.getNumber(),
+			    productPage.getTotalPages()
+			);
 		return response;
 	}
 
