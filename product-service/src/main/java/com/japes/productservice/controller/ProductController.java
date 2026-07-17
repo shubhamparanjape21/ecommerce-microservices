@@ -1,7 +1,5 @@
 package com.japes.productservice.controller;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,9 +9,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.productservice.dto.CreateProductRequest;
+import com.japes.productservice.dto.ProductPageResponse;
 import com.japes.productservice.dto.ProductResponse;
 import com.japes.productservice.dto.UpdateProductRequest;
 import com.japes.productservice.service.ProductService;
@@ -36,10 +36,14 @@ public class ProductController {
 	}
 	
 	@GetMapping
-	public ResponseEntity<List<ProductResponse>> fetchAllProducts() {
-		log.info("Received request to fetch all products");
-		List<ProductResponse> list = productService.getProductList();
-		return new ResponseEntity<List<ProductResponse>>(list, HttpStatus.OK);
+	public ResponseEntity<ProductPageResponse> getProductList(
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "id") String sortBy,
+			@RequestParam(defaultValue = "asc") String direction) {
+		log.info("Received request to fetch products - page: {}, size: {}, sortBy: {}, direction: {}", page, size, sortBy, direction);
+		ProductPageResponse response = productService.getProductList(page, size, sortBy, direction);
+		return ResponseEntity.ok(response);
 	}
 	
 	@GetMapping("/{id}")

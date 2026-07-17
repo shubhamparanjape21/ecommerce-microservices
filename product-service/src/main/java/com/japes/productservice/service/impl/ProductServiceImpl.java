@@ -1,12 +1,16 @@
 package com.japes.productservice.service.impl;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.japes.productservice.dto.CreateProductRequest;
+import com.japes.productservice.dto.ProductPageResponse;
 import com.japes.productservice.dto.ProductResponse;
 import com.japes.productservice.dto.UpdateProductRequest;
 import com.japes.productservice.entity.Product;
@@ -42,15 +46,22 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public List<ProductResponse> getProductList() {
-		log.info("Fetching all products");
-		List<Product> products = productRepository.findAll();
-		log.debug("Retrieved {} products from database", products.size());
+	public ProductPageResponse getProductList(int page, int size, String sortBy, String direction) {
+		log.info("Fetching products - page: {}, size: {}, sortBy: {}, direction: {}", page, size, sortBy, direction);
+		Sort sort = direction.equalsIgnoreCase("asc")
+						? Sort.by(sortBy).ascending()
+						: Sort.by(sortBy).descending();
+		Pageable pageable = PageRequest.of(page, size, sort);
+		Page<Product> productPage = productRepository.findAll(pageable);
 		log.debug("Mapping Product entities to ProductResponse DTOs");
-		List<ProductResponse> response = products.stream()
-					.map(product -> modelMapper.map(product, ProductResponse.class))
+		List<ProductResponse> responses = productPage.getContent()
+					.stream()
+					.map(product ->
+							modelMapper.map(product, ProductResponse.class))
 					.toList();
-		log.info("Successfully fetched {} products", response.size());
+		log.debug("Retrieved {} products from database", responses.size());
+		ProductPageResponse response = new ProductPageResponse(responses,productPage.getNumber(),productPage.getTotalPages(),productPage.getTotalElements(),productPage.getSize(),productPage.isFirst(),productPage.isLast());
+		log.debug("Retrieved {} products from database", productPage.getNumberOfElements());
 		return response;
 	}
 
