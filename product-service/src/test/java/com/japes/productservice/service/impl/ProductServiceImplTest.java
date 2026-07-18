@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.Pageable;
 import com.japes.productservice.dto.CreateProductRequest;
 import com.japes.productservice.dto.ProductPageResponse;
 import com.japes.productservice.dto.ProductResponse;
+import com.japes.productservice.dto.UpdateProductRequest;
 import com.japes.productservice.entity.Product;
 import com.japes.productservice.exception.ProductAlreadyExistsException;
 import com.japes.productservice.exception.ProductNotFoundException;
@@ -48,6 +50,7 @@ public class ProductServiceImplTest {
 	private Product product;
 	private Product savedProduct;
 	private ProductResponse response;
+	private UpdateProductRequest updateRequest;
 
 	@BeforeEach
 	void setUp() {
@@ -58,6 +61,12 @@ public class ProductServiceImplTest {
 		request.setName("iPhone 16");
 		request.setDescription("Latest Apple smartphone");
 		request.setPrice(new BigDecimal("89999"));
+		
+		updateRequest = new UpdateProductRequest();
+		updateRequest.setSkuCode("SKU001");
+		updateRequest.setName("iPhone 16 Pro");
+		updateRequest.setDescription("Latest Apple flagship smartphone");
+		updateRequest.setPrice(new BigDecimal("99999"));
 
 		product = new Product();
 		product.setSkuCode(request.getSkuCode());
@@ -107,7 +116,7 @@ public class ProductServiceImplTest {
 	}
 	
 	@Test
-	void testSaveProduct_Exception() {
+	void testSaveProduct_ProductAlreadyExistsException() {
 		// mock the repo
 		when(productRepository.existsBySkuCode(request.getSkuCode())).thenReturn(true);
 		// Act + Assert
@@ -176,7 +185,7 @@ public class ProductServiceImplTest {
 	}
 	
 	@Test
-	void shouldThrowExceptionWhenProductNotFound() {
+	void testGetProductById_ProductNotFoundException() {
 		// mock the repo
 		when(productRepository.findById(1L)).thenReturn(Optional.empty());
 		// Act + Assert
@@ -199,7 +208,7 @@ public class ProductServiceImplTest {
 	}
 	
 	@Test
-	void testDeleteProduct_Exception() {
+	void testDeleteProduct_ProductNotFoundException() {
 		// mock the repo
 		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.empty());
 		// Act + Assert
@@ -209,6 +218,42 @@ public class ProductServiceImplTest {
 		verify(productRepository).findById(savedProduct.getId());
 		// verify delete should never happen
 		verify(productRepository, never()).deleteById(anyLong());
+	}
+	
+	@Test
+	void shouldUpdateProductSuccessfully() {
+		// mock repository
+		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.of(savedProduct));
+		// manually change the object state to represent its updated state
+		savedProduct.setName(updateRequest.getName());
+		savedProduct.setDescription(updateRequest.getDescription());
+		savedProduct.setPrice(updateRequest.getPrice());
+		// stub
+		when(productRepository.save(savedProduct)).thenReturn(savedProduct);
+		when(modelMapper.map(savedProduct, ProductResponse.class)).thenReturn(response);
+		doNothing().when(modelMapper).map(updateRequest, savedProduct);
+		// update response
+		response.setName(updateRequest.getName());
+		response.setDescription(updateRequest.getDescription());
+		response.setPrice(updateRequest.getPrice());
+		// Act
+		ProductResponse result = productService.updateProduct(1L, updateRequest);
+		// Assert
+		assertNotNull(result);
+		assertEquals(updateRequest.getSkuCode(), result.getSkuCode());
+		assertEquals(updateRequest.getName(), result.getName());
+		assertEquals(updateRequest.getDescription(), result.getDescription());
+		assertEquals(updateRequest.getPrice(), result.getPrice());
+		// verify
+		verify(productRepository).findById(savedProduct.getId());
+		verify(modelMapper).map(updateRequest, savedProduct);
+		verify(productRepository).save(savedProduct);
+		verify(modelMapper).map(savedProduct, ProductResponse.class);
+	}
+	
+	@Test
+	void testUpdateProduct_ProductNotFoundException() {
+		
 	}
 
 }
