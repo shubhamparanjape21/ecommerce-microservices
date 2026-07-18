@@ -8,10 +8,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +31,7 @@ import com.japes.productservice.dto.ProductPageResponse;
 import com.japes.productservice.dto.ProductResponse;
 import com.japes.productservice.entity.Product;
 import com.japes.productservice.exception.ProductAlreadyExistsException;
+import com.japes.productservice.exception.ProductNotFoundException;
 import com.japes.productservice.repository.ProductRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -116,7 +119,7 @@ public class ProductServiceImplTest {
 	
 	@Test
 	void shouldReturnPaginatedProductList() {
-		
+
 		Product product2 = new Product();
 		product2.setId(2L);
 		product2.setSkuCode("SKU002");
@@ -153,6 +156,33 @@ public class ProductServiceImplTest {
 		verify(productRepository).findAll(any(Pageable.class));
 		verify(modelMapper).map(savedProduct, ProductResponse.class);
 		verify(modelMapper).map(product2, ProductResponse.class);
+	}
+	
+	@Test
+	void shouldReturnProductWhenIdExists() {
+		// mocking behaviour
+		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.of(savedProduct));
+		when(modelMapper.map(savedProduct, ProductResponse.class)).thenReturn(response);
+		// Act
+		ProductResponse result = productService.getProductById(1L);
+		// Assert
+		assertNotNull(result);
+		assertEquals("SKU001", result.getSkuCode());
+		assertEquals("iPhone 16", result.getName());
+		// verify
+		verify(productRepository).findById(1L);
+		verify(modelMapper).map(savedProduct, ProductResponse.class);
+	}
+	
+	@Test
+	void shouldThrowExceptionWhenProductNotFound() {
+		// mock the repo
+		when(productRepository.findById(1L)).thenReturn(Optional.empty());
+		// Act + Assert
+		ProductNotFoundException exception = assertThrows(ProductNotFoundException.class, () -> productService.getProductById(1L));
+		assertEquals("Product with ID 1 not found", exception.getMessage());
+		verify(productRepository).findById(1L);
+		verifyNoInteractions(modelMapper);
 	}
 
 }
