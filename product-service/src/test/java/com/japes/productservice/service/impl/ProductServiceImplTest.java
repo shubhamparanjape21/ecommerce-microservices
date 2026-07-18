@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -183,6 +184,31 @@ public class ProductServiceImplTest {
 		assertEquals("Product with ID 1 not found", exception.getMessage());
 		verify(productRepository).findById(1L);
 		verifyNoInteractions(modelMapper);
+	}
+	
+	@Test
+	void shouldDeleteProductSuccessfully() {
+		// mocking behaviour
+		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.of(savedProduct));
+		// Act
+		productService.deleteProduct(savedProduct.getId());
+		// Assert - nothing to assert because no return value
+		// verify interactions
+		verify(productRepository).findById(savedProduct.getId());
+		verify(productRepository).deleteById(savedProduct.getId());
+	}
+	
+	@Test
+	void testDeleteProduct_Exception() {
+		// mock the repo
+		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.empty());
+		// Act + Assert
+		ProductNotFoundException exception = assertThrows(ProductNotFoundException.class, () -> productService.deleteProduct(savedProduct.getId()));
+		assertEquals("Product with ID 1 not found", exception.getMessage());
+		// verify repository searched
+		verify(productRepository).findById(savedProduct.getId());
+		// verify delete should never happen
+		verify(productRepository, never()).deleteById(anyLong());
 	}
 
 }
