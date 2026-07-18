@@ -253,7 +253,46 @@ public class ProductServiceImplTest {
 	
 	@Test
 	void testUpdateProduct_ProductNotFoundException() {
-		
+		when(productRepository.findById(1L))
+        .thenReturn(Optional.empty());
+		ProductNotFoundException exception =
+		        assertThrows(
+		                ProductNotFoundException.class,
+		                () -> productService.updateProduct(1L, updateRequest)
+		        );
+		assertEquals(
+		        "Product with ID 1 not found",
+		        exception.getMessage()
+		);
+		verify(productRepository).findById(1L);
+		verify(productRepository, never()).save(any(Product.class));
+		verifyNoInteractions(modelMapper);
+	}
+	
+	@Test
+	void testUpdateProduct_ProductAlreadyExistsException() {
+		// Repository finds existing product
+		when(productRepository.findById(1L))
+        .thenReturn(Optional.of(savedProduct));
+		// make the update request use a different SKU
+		updateRequest.setSkuCode("SKU999");
+		// stub
+		when(productRepository.existsBySkuCode(updateRequest.getSkuCode())).thenReturn(true);
+		// Act + Assert
+		ProductAlreadyExistsException exception =
+		        assertThrows(
+		                ProductAlreadyExistsException.class,
+		                () -> productService.updateProduct(1L, updateRequest)
+		        );
+		assertEquals(
+		        "Another product with SKU SKU999 already exists",
+		        exception.getMessage()
+		);
+		// verify 
+		verify(productRepository).findById(1L); // repo is searched
+		verify(productRepository).existsBySkuCode("SKU999"); // duplicate is executed
+		verify(productRepository, never()).save(any(Product.class)); //save should never happen
+		verifyNoInteractions(modelMapper); // mapper should never be called because exception is thrown before it
 	}
 
 }
