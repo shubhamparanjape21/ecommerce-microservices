@@ -13,15 +13,18 @@ import com.japes.inventoryservice.service.InventoryService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/v1/inventory")
 @RequiredArgsConstructor
+@Slf4j
 public class InventoryController {
 	private final InventoryService inventoryService;
 	
 	@PostMapping
 	public ResponseEntity<InventoryResponse> saveInventory(@RequestBody @Valid CreateInventoryRequest request) {
+		log.info("Received request to create inventory with SKU {}", request.getSkuCode());
 		InventoryResponse createdInventory = inventoryService.saveInventory(request);
 		return new ResponseEntity<InventoryResponse>(createdInventory, HttpStatus.CREATED);
 	}
