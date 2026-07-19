@@ -3,6 +3,7 @@ package com.japes.inventoryservice.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +14,6 @@ import com.japes.inventoryservice.dto.CreateInventoryRequest;
 import com.japes.inventoryservice.dto.InventoryPageResponse;
 import com.japes.inventoryservice.dto.InventoryResponse;
 import com.japes.inventoryservice.service.InventoryService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,5 +37,11 @@ public class InventoryController {
 		log.info("Received request to fetch inventories - page: {}, size: {}, sortBy: {}, direction: {}", page, size, sortBy, direction);
 		InventoryPageResponse response = inventoryService.getInventoryList(page, size, sortBy, direction);
 		return ResponseEntity.ok(response);
+	}
+	
+	@GetMapping("/{id}")
+	public ResponseEntity<InventoryResponse> getProductById(@PathVariable Long id) {
+		InventoryResponse response = inventoryService.getInventoryById(id);
+		return new ResponseEntity<InventoryResponse>(response, HttpStatus.OK);
 	}
 }

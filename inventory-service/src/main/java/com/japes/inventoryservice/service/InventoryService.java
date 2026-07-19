@@ -7,4 +7,5 @@ import com.japes.inventoryservice.dto.InventoryResponse;
 public interface InventoryService {
 	InventoryResponse saveInventory(CreateInventoryRequest request);
 	InventoryPageResponse getInventoryList(int page, int size, String sortBy, String direction);
+	InventoryResponse getInventoryById(Long id);
 }

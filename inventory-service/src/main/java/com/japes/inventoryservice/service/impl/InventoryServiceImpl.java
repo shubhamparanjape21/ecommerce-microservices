@@ -67,4 +67,19 @@ public class InventoryServiceImpl implements InventoryService {
 			);
 		return response;
 	}
+
+	@Override
+	public InventoryResponse getInventoryById(Long id) {
+		log.info("Received request to fetch inventory with ID {}", id);
+		log.debug("Checking whether inventory exists");
+		Inventory inventory = inventoryRepository.findById(id)
+				.orElseThrow(() -> {
+					log.warn("Inventory not found with ID {}", id);
+					return new InventoryNotFoundException("Inventory with ID " + id + " not found");
+				});
+		log.debug("Mapping Inventory entity to InventoryResponse");
+		InventoryResponse response = modelMapper.map(inventory, InventoryResponse.class);
+		log.info("Successfully fetched inventory with ID {}", id);
+		return response;
+	}
 }
