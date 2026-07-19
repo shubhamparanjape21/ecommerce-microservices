@@ -25,14 +25,14 @@ public class InventoryServiceImpl implements InventoryService {
 		log.info("Creating inventory with SKU {}", request.getSkuCode());
 		log.debug("Checking if inventory with SKU {} already exists", request.getSkuCode());
 		if(inventoryRepository.existsBySkuCode(request.getSkuCode())) {
-			log.warn("Duplicate product creation attempted for SKU {}", request.getSkuCode());
+			log.warn("Duplicate inventory creation attempted for SKU {}", request.getSkuCode());
 			throw new InventoryAlreadyExistsException("Inventory with SKU " + request.getSkuCode() + " already exists");
 		}
 		log.debug("Mapping CreateInventoryRequest to Inventory entity");
 		Inventory inventory = modelMapper.map(request, Inventory.class);
 		log.debug("Saving inventory to database");
 		Inventory savedInventory = inventoryRepository.save(inventory);
-		log.info("Inventory created successfully with ID {}", savedInventory.getId());
+		log.info("Successfully created inventory with ID {}", savedInventory.getId());
 		return modelMapper.map(savedInventory, InventoryResponse.class);
 	}
 }
