@@ -1,12 +1,20 @@
 package com.japes.inventoryservice.service.impl;
 
+import java.util.List;
+
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.japes.inventoryservice.dto.CreateInventoryRequest;
+import com.japes.inventoryservice.dto.InventoryPageResponse;
 import com.japes.inventoryservice.dto.InventoryResponse;
 import com.japes.inventoryservice.entity.Inventory;
 import com.japes.inventoryservice.exception.InventoryAlreadyExistsException;
+import com.japes.inventoryservice.exception.InventoryNotFoundException;
 import com.japes.inventoryservice.repository.InventoryRepository;
 import com.japes.inventoryservice.service.InventoryService;
 
@@ -34,5 +42,29 @@ public class InventoryServiceImpl implements InventoryService {
 		Inventory savedInventory = inventoryRepository.save(inventory);
 		log.info("Successfully created inventory with ID {}", savedInventory.getId());
 		return modelMapper.map(savedInventory, InventoryResponse.class);
+	}
+
+	@Override
+	public InventoryPageResponse getInventoryList(int page, int size, String sortBy, String direction) {
+		log.info("Fetching inventories - page: {}, size: {}, sortBy: {}, direction: {}", page, size, sortBy, direction);
+		Sort sort = direction.equalsIgnoreCase("asc")
+					? Sort.by(sortBy).ascending()
+					: Sort.by(sortBy).descending();
+		Pageable pageable = PageRequest.of(page, size, sort);
+		Page<Inventory> inventoryPage = inventoryRepository.findAll(pageable);
+		log.debug("Retrieved {} inventory records from database", inventoryPage.getNumberOfElements());
+		log.debug("Mapping Inventory entities to InventoryResponse DTOs");
+		List<InventoryResponse> inventories = inventoryPage.getContent()
+					.stream()
+					.map(inventory -> modelMapper.map(inventory, InventoryResponse.class))
+					.toList();
+		InventoryPageResponse response = new InventoryPageResponse(inventories, inventoryPage.getNumber(), inventoryPage.getTotalPages(), inventoryPage.getTotalElements(), inventoryPage.getSize(), inventoryPage.isFirst(), inventoryPage.isLast());
+		log.info(
+			    "Successfully fetched {} inventory records (page {} of {})",
+			    inventoryPage.getNumberOfElements(),
+			    inventoryPage.getNumber(),
+			    inventoryPage.getTotalPages()
+			);
+		return response;
 	}
 }
