@@ -18,10 +18,18 @@ import com.japes.inventoryservice.dto.InventoryResponse;
 import com.japes.inventoryservice.dto.UpdateInventoryRequest;
 import com.japes.inventoryservice.service.InventoryService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Tag(
+	    name = "Inventory Management",
+	    description = "REST APIs for managing product inventory"
+	)
 @RestController
 @RequestMapping("/api/v1/inventory")
 @RequiredArgsConstructor
@@ -29,6 +37,15 @@ import lombok.extern.slf4j.Slf4j;
 public class InventoryController {
 	private final InventoryService inventoryService;
 	
+	@Operation(
+		    summary = "Create Inventory",
+		    description = "Creates a new inventory record for a product."
+		)
+		@ApiResponses({
+		    @ApiResponse(responseCode = "201", description = "Inventory created successfully"),
+		    @ApiResponse(responseCode = "400", description = "Invalid inventory data"),
+		    @ApiResponse(responseCode = "409", description = "Inventory with the given SKU already exists")
+		})
 	@PostMapping
 	public ResponseEntity<InventoryResponse> saveInventory(@RequestBody @Valid CreateInventoryRequest request) {
 		log.info("Received request to create inventory with SKU {}", request.getSkuCode());
@@ -36,6 +53,13 @@ public class InventoryController {
 		return new ResponseEntity<InventoryResponse>(createdInventory, HttpStatus.CREATED);
 	}
 	
+	@Operation(
+		    summary = "Get Inventory List",
+		    description = "Retrieves paginated inventory records with sorting support."
+		)
+		@ApiResponses({
+		    @ApiResponse(responseCode = "200", description = "Inventory list retrieved successfully")
+		})
 	@GetMapping
 	public ResponseEntity<InventoryPageResponse> getInventoryList(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sortBy, @RequestParam(defaultValue = "asc") String direction) {
 		log.info("Received request to fetch inventories - page: {}, size: {}, sortBy: {}, direction: {}", page, size, sortBy, direction);
@@ -43,24 +67,58 @@ public class InventoryController {
 		return ResponseEntity.ok(response);
 	}
 	
+	@Operation(
+		    summary = "Get Inventory by ID",
+		    description = "Retrieves inventory details for the specified inventory ID."
+		)
+		@ApiResponses({
+		    @ApiResponse(responseCode = "200", description = "Inventory retrieved successfully"),
+		    @ApiResponse(responseCode = "404", description = "Inventory not found")
+		})
 	@GetMapping("/{id}")
 	public ResponseEntity<InventoryResponse> getInventoryById(@PathVariable Long id) {
 		InventoryResponse response = inventoryService.getInventoryById(id);
 		return new ResponseEntity<InventoryResponse>(response, HttpStatus.OK);
 	}
 	
+	@Operation(
+		    summary = "Get Inventory by SKU",
+		    description = "Retrieves inventory details for the specified SKU code."
+		)
+		@ApiResponses({
+		    @ApiResponse(responseCode = "200", description = "Inventory retrieved successfully"),
+		    @ApiResponse(responseCode = "404", description = "Inventory not found")
+		})
 	@GetMapping("/sku/{skuCode}")
 	public ResponseEntity<InventoryResponse> getInventoryBySkuCode(@PathVariable String skuCode) {
 		InventoryResponse response = inventoryService.getInventoryBySkuCode(skuCode);
 		return ResponseEntity.ok(response);
 	}
 	
+	@Operation(
+		    summary = "Update Inventory",
+		    description = "Updates an existing inventory record by ID."
+		)
+		@ApiResponses({
+		    @ApiResponse(responseCode = "200", description = "Inventory updated successfully"),
+		    @ApiResponse(responseCode = "400", description = "Invalid inventory data"),
+		    @ApiResponse(responseCode = "404", description = "Inventory not found"),
+		    @ApiResponse(responseCode = "409", description = "Inventory with the given SKU already exists")
+		})
 	@PutMapping("/update/{id}")
 	public ResponseEntity<InventoryResponse> updateInventory(@PathVariable Long id, @RequestBody @Valid UpdateInventoryRequest updateRequest) {
 		InventoryResponse response = inventoryService.updateInventory(id, updateRequest);
 		return ResponseEntity.ok(response);
 	}
 	
+	@Operation(
+		    summary = "Delete Inventory",
+		    description = "Deletes an inventory record by its ID."
+		)
+		@ApiResponses({
+		    @ApiResponse(responseCode = "204", description = "Inventory deleted successfully"),
+		    @ApiResponse(responseCode = "404", description = "Inventory not found")
+		})
 	@DeleteMapping("/{id}")
 	public ResponseEntity<InventoryResponse> deleteInventoryById(@PathVariable Long id) {
 		inventoryService.deleteInventory(id);
