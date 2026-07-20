@@ -120,4 +120,18 @@ public class InventoryServiceImpl implements InventoryService {
 		InventoryResponse response = modelMapper.map(savedInventory, InventoryResponse.class);
 		return response;
 	}
+
+	@Override
+	public void deleteInventory(Long id) {
+		log.info("Received request to delete inventory with ID {}", id);
+		log.debug("Checking whether inventory exists");
+		Inventory existingInventory = inventoryRepository.findById(id)
+				.orElseThrow(() -> {
+					log.warn("Inventory not found with ID {}", id);
+					return new InventoryNotFoundException("Product with ID " + id + " not found");
+				});
+		log.debug("Deleting inventory from database");
+		inventoryRepository.deleteById(id);
+		log.info("Successfully deleted inventory with ID {}", id);
+	}
 }
