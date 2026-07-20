@@ -91,7 +91,7 @@ public class InventoryServiceImpl implements InventoryService {
 		Inventory inventory = inventoryRepository.findBySkuCode(skuCode)
 				.orElseThrow(() -> {
 					log.warn("Inventory not found with SKU {}", skuCode);
-					return new InventoryNotFoundException("Inventory with SKU {}" + skuCode + " not found");
+					return new InventoryNotFoundException("Inventory with SKU" + skuCode + " not found");
 				});
 		log.debug("Mapping Inventory entity to InventoryResponse");
 		InventoryResponse response = modelMapper.map(inventory, InventoryResponse.class);
@@ -118,17 +118,18 @@ public class InventoryServiceImpl implements InventoryService {
 		Inventory savedInventory = inventoryRepository.save(existingInventory);
 		log.debug("Mapping Inventory entity to InventoryResponse");
 		InventoryResponse response = modelMapper.map(savedInventory, InventoryResponse.class);
+		log.info("Successfully updated inventory with ID {}", response.getId());
 		return response;
 	}
 
 	@Override
 	public void deleteInventory(Long id) {
 		log.info("Received request to delete inventory with ID {}", id);
-		log.debug("Checking whether inventory exists");
-		Inventory existingInventory = inventoryRepository.findById(id)
+		log.debug("Checking whether inventory with ID {} exists", id);
+		inventoryRepository.findById(id)
 				.orElseThrow(() -> {
 					log.warn("Inventory not found with ID {}", id);
-					return new InventoryNotFoundException("Product with ID " + id + " not found");
+					return new InventoryNotFoundException("Inventory with ID " + id + " not found");
 				});
 		log.debug("Deleting inventory from database");
 		inventoryRepository.deleteById(id);
