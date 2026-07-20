@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.japes.inventoryservice.dto.CreateInventoryRequest;
 import com.japes.inventoryservice.dto.InventoryPageResponse;
 import com.japes.inventoryservice.dto.InventoryResponse;
+import com.japes.inventoryservice.dto.UpdateInventoryRequest;
 import com.japes.inventoryservice.entity.Inventory;
 import com.japes.inventoryservice.exception.InventoryAlreadyExistsException;
 import com.japes.inventoryservice.exception.InventoryNotFoundException;
@@ -95,6 +96,28 @@ public class InventoryServiceImpl implements InventoryService {
 		log.debug("Mapping Inventory entity to InventoryResponse");
 		InventoryResponse response = modelMapper.map(inventory, InventoryResponse.class);
 		log.info("Successfully fetched inventory with SKU {}", skuCode);
+		return response;
+	}
+
+	@Override
+	public InventoryResponse updateInventory(Long id, UpdateInventoryRequest updateRequest) {
+		log.info("Received request to update inventory with ID {}", id);
+		log.debug("Checking whether inventory with ID {} exists", id);
+		Inventory existingInventory = inventoryRepository.findById(id)
+				.orElseThrow(() -> {
+					log.warn("Inventory not found with ID {}", id);
+					return new InventoryNotFoundException("Inventory with ID " + id + " not found");
+				});
+		if(!existingInventory.getSkuCode().equals(updateRequest.getSkuCode()) && inventoryRepository.existsBySkuCode(updateRequest.getSkuCode())) {
+			log.warn("Duplicate SKU {} provided for update", updateRequest.getSkuCode());
+			throw new InventoryAlreadyExistsException("Another inventory with SKU " + updateRequest.getSkuCode() + " already exists");
+		}
+		log.debug("Mapping UpdateInventoryRequest to existing inventory entity");
+		modelMapper.map(updateRequest, existingInventory);
+		log.debug("Saving updated inventory to database");
+		Inventory savedInventory = inventoryRepository.save(existingInventory);
+		log.debug("Mapping Inventory entity to InventoryResponse");
+		InventoryResponse response = modelMapper.map(savedInventory, InventoryResponse.class);
 		return response;
 	}
 }

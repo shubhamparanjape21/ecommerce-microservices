@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.japes.inventoryservice.dto.CreateInventoryRequest;
 import com.japes.inventoryservice.dto.InventoryPageResponse;
 import com.japes.inventoryservice.dto.InventoryResponse;
+import com.japes.inventoryservice.dto.UpdateInventoryRequest;
 import com.japes.inventoryservice.service.InventoryService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,14 +43,20 @@ public class InventoryController {
 	}
 	
 	@GetMapping("/{id}")
-	public ResponseEntity<InventoryResponse> getProductById(@PathVariable Long id) {
+	public ResponseEntity<InventoryResponse> getInventoryById(@PathVariable Long id) {
 		InventoryResponse response = inventoryService.getInventoryById(id);
 		return new ResponseEntity<InventoryResponse>(response, HttpStatus.OK);
 	}
 	
 	@GetMapping("/sku/{skuCode}")
-	public ResponseEntity<InventoryResponse> getProductBySkuCode(@PathVariable String skuCode) {
+	public ResponseEntity<InventoryResponse> getInventoryBySkuCode(@PathVariable String skuCode) {
 		InventoryResponse response = inventoryService.getInventoryBySkuCode(skuCode);
+		return ResponseEntity.ok(response);
+	}
+	
+	@PutMapping("/update/{id}")
+	public ResponseEntity<InventoryResponse> updateInventory(@PathVariable Long id, @RequestBody @Valid UpdateInventoryRequest updateRequest) {
+		InventoryResponse response = inventoryService.updateInventory(id, updateRequest);
 		return ResponseEntity.ok(response);
 	}
 }
