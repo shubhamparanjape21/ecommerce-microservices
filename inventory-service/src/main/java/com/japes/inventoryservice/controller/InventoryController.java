@@ -44,4 +44,10 @@ public class InventoryController {
 		InventoryResponse response = inventoryService.getInventoryById(id);
 		return new ResponseEntity<InventoryResponse>(response, HttpStatus.OK);
 	}
+	
+	@GetMapping("/sku/{skuCode}")
+	public ResponseEntity<InventoryResponse> getProductBySkuCode(@PathVariable String skuCode) {
+		InventoryResponse response = inventoryService.getInventoryBySkuCode(skuCode);
+		return ResponseEntity.ok(response);
+	}
 }

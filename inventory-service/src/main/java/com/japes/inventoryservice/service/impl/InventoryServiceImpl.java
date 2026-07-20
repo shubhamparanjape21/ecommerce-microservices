@@ -71,7 +71,7 @@ public class InventoryServiceImpl implements InventoryService {
 	@Override
 	public InventoryResponse getInventoryById(Long id) {
 		log.info("Received request to fetch inventory with ID {}", id);
-		log.debug("Checking whether inventory exists");
+		log.debug("Checking whether inventory with ID {} exists", id);
 		Inventory inventory = inventoryRepository.findById(id)
 				.orElseThrow(() -> {
 					log.warn("Inventory not found with ID {}", id);
@@ -80,6 +80,21 @@ public class InventoryServiceImpl implements InventoryService {
 		log.debug("Mapping Inventory entity to InventoryResponse");
 		InventoryResponse response = modelMapper.map(inventory, InventoryResponse.class);
 		log.info("Successfully fetched inventory with ID {}", id);
+		return response;
+	}
+
+	@Override
+	public InventoryResponse getInventoryBySkuCode(String skuCode) {
+		log.info("Received request to fetch inventory with SKU {}", skuCode);
+		log.debug("Checking whether inventory with SKU {} exists", skuCode);
+		Inventory inventory = inventoryRepository.findBySkuCode(skuCode)
+				.orElseThrow(() -> {
+					log.warn("Inventory not found with SKU {}", skuCode);
+					return new InventoryNotFoundException("Inventory with SKU {}" + skuCode + " not found");
+				});
+		log.debug("Mapping Inventory entity to InventoryResponse");
+		InventoryResponse response = modelMapper.map(inventory, InventoryResponse.class);
+		log.info("Successfully fetched inventory with SKU {}", skuCode);
 		return response;
 	}
 }
