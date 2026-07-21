@@ -132,4 +132,33 @@ public class InventoryServiceImplTest {
 		verify(inventoryRepository).findById(savedInventory.getId());
 		verifyNoInteractions(modelMapper);
 	}
+	
+	@Test
+	void shouldReturnInventoryBySku() {
+		// Mock behavior
+		when(inventoryRepository.findBySkuCode(savedInventory.getSkuCode())).thenReturn(Optional.of(savedInventory));
+		when(modelMapper.map(savedInventory, InventoryResponse.class)).thenReturn(response);
+		//Act
+		InventoryResponse result = inventoryServiceImpl.getInventoryBySkuCode(savedInventory.getSkuCode());
+		//Assert
+		assertNotNull(result);
+		assertEquals(1L, result.getId());
+		assertEquals("AIRPODS2USB", result.getSkuCode());
+		assertEquals(42, result.getQuantity());
+		// verify
+		verify(inventoryRepository).findBySkuCode(savedInventory.getSkuCode());
+		verify(modelMapper).map(savedInventory, InventoryResponse.class);
+	}
+	
+	@Test
+	void shouldThrowWhenInventorySkuDoesNotExist() {
+		// mock behavior
+		when(inventoryRepository.findBySkuCode(savedInventory.getSkuCode())).thenReturn(Optional.empty());
+		// Act + Assert
+		InventoryNotFoundException exception = assertThrows(InventoryNotFoundException.class, () -> inventoryServiceImpl.getInventoryBySkuCode(savedInventory.getSkuCode()));
+		assertEquals("Inventory with SKU"+ savedInventory.getSkuCode() + " not found", exception.getMessage());
+		// verify
+		verify(inventoryRepository).findBySkuCode(savedInventory.getSkuCode());
+		verifyNoInteractions(modelMapper);
+	}
 }
