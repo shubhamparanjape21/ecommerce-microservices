@@ -3,6 +3,7 @@ package com.japes.inventoryservice.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +21,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import com.japes.inventoryservice.dto.CreateInventoryRequest;
+import com.japes.inventoryservice.dto.InventoryPageResponse;
 import com.japes.inventoryservice.dto.InventoryResponse;
 import com.japes.inventoryservice.dto.UpdateInventoryRequest;
 import com.japes.inventoryservice.entity.Inventory;
@@ -160,5 +166,42 @@ public class InventoryServiceImplTest {
 		// verify
 		verify(inventoryRepository).findBySkuCode(savedInventory.getSkuCode());
 		verifyNoInteractions(modelMapper);
+	}
+	
+	@Test
+	void shouldReturnPaginatedInventoryList() {
+
+		Inventory inventory2 = new Inventory();
+		inventory.setId(2L);
+		inventory2.setSkuCode("DELLU2724D");
+		inventory2.setQuantity(20);
+		
+		InventoryResponse response2 = new InventoryResponse();
+		response2.setId(inventory2.getId());
+		response2.setSkuCode(inventory2.getSkuCode());
+		response2.setQuantity(inventory2.getQuantity());
+		
+		List<Inventory> inventories = List.of(savedInventory, inventory2);
+		Page<Inventory> inventoryPage = new PageImpl<>(inventories); // it simulates to productRepository.findAll(pageable);
+		// mock behavior
+		when(inventoryRepository.findAll(any(Pageable.class)))
+        .thenReturn(inventoryPage);
+		when(modelMapper.map(savedInventory, InventoryResponse.class))
+		.thenReturn(response);
+		when(modelMapper.map(inventory2, InventoryResponse.class))
+		.thenReturn(response2);
+		// Act
+		InventoryPageResponse result = inventoryServiceImpl.getInventoryList(0, 5, "name", "asc");
+		//Assert
+		assertNotNull(result);
+		assertEquals(2, result.getInventories().size());
+		assertEquals(0, result.getCurrentPage());
+		assertEquals(2, result.getTotalElements());
+		assertTrue(result.isFirst());
+		assertTrue(result.isLast());
+		// verify
+		verify(inventoryRepository).findAll(any(Pageable.class));
+		verify(modelMapper).map(savedInventory, InventoryResponse.class);
+		verify(modelMapper).map(inventory2, InventoryResponse.class);
 	}
 }
