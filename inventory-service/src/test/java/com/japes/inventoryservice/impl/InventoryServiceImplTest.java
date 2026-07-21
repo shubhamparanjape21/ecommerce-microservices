@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
@@ -254,11 +255,38 @@ public class InventoryServiceImplTest {
 		// Act + Assert
 		InventoryAlreadyExistsException exception = assertThrows(InventoryAlreadyExistsException.class,
 				() -> inventoryServiceImpl.updateInventory(1L, updateRequest));
-		assertEquals("Another inventory with SKU " + updateRequest.getSkuCode() + " already exists", exception.getMessage());
+		assertEquals("Another inventory with SKU " + updateRequest.getSkuCode() + " already exists",
+				exception.getMessage());
 		// verify
 		verify(inventoryRepository).findById(1L); // repo is searched
 		verify(inventoryRepository).existsBySkuCode("AIRPODS3USB"); // duplicate is executed
 		verify(inventoryRepository, never()).save(any(Inventory.class)); // save should never happen
 		verifyNoInteractions(modelMapper); // mapper should never be called because exception is thrown before it
+	}
+
+	@Test
+	void shouldDeleteInventorySuccessfully() {
+		// mocking behaviour
+		when(inventoryRepository.findById(savedInventory.getId())).thenReturn(Optional.of(savedInventory));
+		// Act
+		inventoryServiceImpl.deleteInventory(savedInventory.getId());
+		// Assert - nothing to assert because no return value
+		// verify interactions
+		verify(inventoryRepository).findById(savedInventory.getId());
+		verify(inventoryRepository).deleteById(savedInventory.getId());
+	}
+
+	@Test
+	void shouldThrowWhenDeletingNonExistingInventory() {
+		// mock the repo
+		when(inventoryRepository.findById(savedInventory.getId())).thenReturn(Optional.empty());
+		// Act + Assert
+		InventoryNotFoundException exception = assertThrows(InventoryNotFoundException.class,
+				() -> inventoryServiceImpl.deleteInventory(savedInventory.getId()));
+		assertEquals("Inventory with ID "+ savedInventory.getId() +" not found", exception.getMessage());
+		// verify repository searched
+		verify(inventoryRepository).findById(savedInventory.getId());
+		// verify delete should never happen
+		verify(inventoryRepository, never()).deleteById(anyLong());
 	}
 }
