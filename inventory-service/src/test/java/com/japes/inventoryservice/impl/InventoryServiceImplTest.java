@@ -7,7 +7,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +25,7 @@ import com.japes.inventoryservice.dto.InventoryResponse;
 import com.japes.inventoryservice.dto.UpdateInventoryRequest;
 import com.japes.inventoryservice.entity.Inventory;
 import com.japes.inventoryservice.exception.InventoryAlreadyExistsException;
+import com.japes.inventoryservice.exception.InventoryNotFoundException;
 import com.japes.inventoryservice.repository.InventoryRepository;
 import com.japes.inventoryservice.service.impl.InventoryServiceImpl;
 
@@ -98,5 +102,34 @@ public class InventoryServiceImplTest {
 		verify(inventoryRepository, never()).save(any(Inventory.class));
 		verify(modelMapper, never()).map(any(), eq(Inventory.class));
 		verify(modelMapper, never()).map(any(), eq(InventoryResponse.class));
+	}
+	
+	@Test
+	void shouldReturnInventoryById() {
+		// Mock behavior
+		when(inventoryRepository.findById(savedInventory.getId())).thenReturn(Optional.of(savedInventory));
+		when(modelMapper.map(savedInventory, InventoryResponse.class)).thenReturn(response);
+		//Act
+		InventoryResponse result = inventoryServiceImpl.getInventoryById(savedInventory.getId());
+		//Assert
+		assertNotNull(result);
+		assertEquals(1L, result.getId());
+		assertEquals("AIRPODS2USB", result.getSkuCode());
+		assertEquals(42, result.getQuantity());
+		// verify
+		verify(inventoryRepository).findById(savedInventory.getId());
+		verify(modelMapper).map(savedInventory, InventoryResponse.class);
+	}
+	
+	@Test
+	void shouldThrowWhenInventoryIdDoesNotExist() {
+		// mock behavior
+		when(inventoryRepository.findById(savedInventory.getId())).thenReturn(Optional.empty());
+		// Act + Assert
+		InventoryNotFoundException exception = assertThrows(InventoryNotFoundException.class, () -> inventoryServiceImpl.getInventoryById(savedInventory.getId()));
+		assertEquals("Inventory with ID "+ savedInventory.getId() + " not found", exception.getMessage());
+		// verify
+		verify(inventoryRepository).findById(savedInventory.getId());
+		verifyNoInteractions(modelMapper);
 	}
 }
