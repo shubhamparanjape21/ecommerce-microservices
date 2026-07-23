@@ -10,4 +10,5 @@ public interface OrderService {
 	OrderResponse getOrderByOrderNumber(String orderNumber);
 	OrderPageResponse getOrdersByUserId(Long userId, int page, int size, String sortBy, String direction);
 	OrderResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest request);
+	OrderResponse cancelOrder(String orderNumber);
 }

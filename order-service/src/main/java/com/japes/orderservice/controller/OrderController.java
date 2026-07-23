@@ -3,6 +3,7 @@ package com.japes.orderservice.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -64,6 +65,14 @@ public class OrderController {
 			@RequestBody @Valid UpdateOrderStatusRequest request){
 		log.info("Received request to update status of order {}", orderNumber);
 		OrderResponse response = orderService.updateOrderStatus(orderNumber, request);
+		return ResponseEntity.ok(response);
+	}
+	
+	@PatchMapping("/{orderNumber}/cancel")
+	public ResponseEntity<OrderResponse> cancelOrder(
+			@PathVariable String orderNumber){
+		log.info("Received request to cancel order {}", orderNumber);
+		OrderResponse response = orderService.cancelOrder(orderNumber);
 		return ResponseEntity.ok(response);
 	}
 	

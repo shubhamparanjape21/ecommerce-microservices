@@ -18,6 +18,7 @@ import com.japes.orderservice.dto.UpdateOrderStatusRequest;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
+import com.japes.orderservice.exception.OrderAlreadyDeliveredException;
 import com.japes.orderservice.exception.OrderNotFoundException;
 import com.japes.orderservice.repository.OrderRepository;
 import com.japes.orderservice.service.OrderService;
@@ -158,6 +159,31 @@ public class OrderServiceImpl implements OrderService {
 	    log.info("Successfully updated status of order {} to {}",
 	            orderNumber, updatedOrder.getStatus());
 		return mapToOrderResponse(updatedOrder);
+	}
+
+	@Override
+	public OrderResponse cancelOrder(String orderNumber) {
+		log.info("Received request to cancel order {}", orderNumber);
+	    log.debug("Checking whether order with order number {} exists", orderNumber);
+	    Order order = orderRepository.findByOrderNumber(orderNumber)
+	    		.orElseThrow(() -> {
+	    			log.warn("Order not found with order number {}", orderNumber);
+	    			return new OrderNotFoundException("Order with order number " + orderNumber + " not found");
+	    		});
+	    if(order.getStatus() == OrderStatus.DELIVERED) {
+	    	log.warn("Cannot cancel order {} because it has already been delivered", orderNumber);
+	    	throw new OrderAlreadyDeliveredException("Delivered orders cannot be cancelled");
+	    }
+	    if(order.getStatus() == OrderStatus.CANCELLED) {
+	    	log.warn("Order {} is already cancelled", orderNumber);
+	    	throw new OrderAlreadyDeliveredException("Order is already cancelled");
+	    }
+	    log.debug("Updating order status to CANCELED");
+	    order.setStatus(OrderStatus.CANCELLED);
+	    log.debug("Saving cancelled order");
+	    Order cancelledOrder = orderRepository.save(order);
+	    log.info("Successfully cancelled order {}", orderNumber);
+	    return mapToOrderResponse(cancelledOrder);
 	}
 
 	
