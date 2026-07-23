@@ -7,9 +7,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.orderservice.dto.CreateOrderRequest;
+import com.japes.orderservice.dto.OrderPageResponse;
 import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.service.OrderService;
 
@@ -36,5 +38,21 @@ public class OrderController {
 		log.info("Received request to fetch order {}", orderNumber);
 		OrderResponse response = orderService.getOrderByOrderNumber(orderNumber);
 		return new ResponseEntity<OrderResponse>(response, HttpStatus.OK);
+	}
+	
+	@GetMapping("/user/{userId}")
+	public ResponseEntity<OrderPageResponse> getOrdersByUserId(
+	        @PathVariable Long userId,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "2") int size,
+	        @RequestParam(defaultValue = "id") String sortBy,
+	        @RequestParam(defaultValue = "desc") String direction) {
+
+	    log.info("Received request to fetch orders for user {}", userId);
+
+	    OrderPageResponse response =
+	            orderService.getOrdersByUserId(userId, page, size, sortBy, direction);
+
+	    return ResponseEntity.ok(response);
 	}
 }

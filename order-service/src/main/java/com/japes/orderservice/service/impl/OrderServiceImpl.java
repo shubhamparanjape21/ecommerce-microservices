@@ -4,10 +4,15 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.japes.orderservice.dto.CreateOrderRequest;
 import com.japes.orderservice.dto.OrderItemResponse;
+import com.japes.orderservice.dto.OrderPageResponse;
 import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
@@ -98,5 +103,43 @@ public class OrderServiceImpl implements OrderService {
 	    log.info("Successfully fetched order with order number {}", orderNumber);
 		return response;
 	}
+
+	@Override
+	public OrderPageResponse getOrdersByUserId(Long userId, int page, int size, String sortBy, String direction) {
+		log.info("Fetching orders for user ID {} - page: {}, size: {}, sortBy: {}, direction: {}",
+	            userId, page, size, sortBy, direction);
+		
+		Sort sort = direction.equalsIgnoreCase("asc")
+				? Sort.by(sortBy).ascending()
+				: Sort.by(sortBy).descending();
+		
+		Pageable pageable = PageRequest.of(page, size, sort);
+		Page<Order> orderPage = orderRepository.findOrderByUserId(userId, pageable);
+		log.debug("Retrieved {} orders from database", orderPage.getNumberOfElements());
+
+	    log.debug("Mapping Order entities to OrderResponse DTOs");
+	    List<OrderResponse> orders = orderPage.getContent()
+	    		.stream()
+	    		.map(this::mapToOrderResponse)
+	    		.toList();
+	    OrderPageResponse response = new OrderPageResponse(
+	    		orders, 
+	    		orderPage.getNumber(),
+	    		orderPage.getTotalPages(),
+	    		orderPage.getTotalElements(),
+	    		orderPage.getSize(),
+	    		orderPage.isFirst(),
+	    		orderPage.isLast()
+	    	);
+	    log.info("Successfully fetched {} orders for user ID {} (page {} of {})",
+	            orderPage.getNumberOfElements(),
+	            userId,
+	            orderPage.getNumber(),
+	            orderPage.getTotalPages());
+	    
+		return response;
+	}
+
+	
 
 }
