@@ -14,6 +14,7 @@ import com.japes.orderservice.dto.CreateOrderRequest;
 import com.japes.orderservice.dto.OrderItemResponse;
 import com.japes.orderservice.dto.OrderPageResponse;
 import com.japes.orderservice.dto.OrderResponse;
+import com.japes.orderservice.dto.UpdateOrderStatusRequest;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
@@ -138,6 +139,25 @@ public class OrderServiceImpl implements OrderService {
 	            orderPage.getTotalPages());
 	    
 		return response;
+	}
+
+	@Override
+	public OrderResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest request) {
+		log.info("Received request to update status of order {}", orderNumber);
+	    log.debug("Checking whether order with order number {} exists", orderNumber);
+	    Order order = orderRepository.findByOrderNumber(orderNumber)
+	    		.orElseThrow(() -> {
+	    			log.warn("Order not found with order number {}", orderNumber);
+	    			return new OrderNotFoundException("Order with order number " + orderNumber + " not found");
+	    		});
+	    log.debug("Updating order status from {} to {}",
+	            order.getStatus(), request.getStatus());
+	    order.setStatus(request.getStatus());
+	    log.debug("Saving updated order");
+	    Order updatedOrder = orderRepository.save(order);
+	    log.info("Successfully updated status of order {} to {}",
+	            orderNumber, updatedOrder.getStatus());
+		return mapToOrderResponse(updatedOrder);
 	}
 
 	
