@@ -12,6 +12,7 @@ import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
+import com.japes.orderservice.exception.OrderNotFoundException;
 import com.japes.orderservice.repository.OrderRepository;
 import com.japes.orderservice.service.OrderService;
 
@@ -81,6 +82,21 @@ public class OrderServiceImpl implements OrderService {
 	            order.getUserId(),
 	            order.getStatus(),
 	            items);
+	}
+
+	@Override
+	public OrderResponse getOrderByOrderNumber(String orderNumber) {
+		log.info("Received request to fetch order with order number {}", orderNumber);
+	    log.debug("Checking whether order with order number {} exists", orderNumber);
+	    Order order = orderRepository.findByOrderNumber(orderNumber)
+	    		.orElseThrow(() -> {
+	    			log.warn("Order not found with order number {}", orderNumber);
+	    			return new OrderNotFoundException("Order with order number " + orderNumber + " not found");
+	    		});
+	    log.debug("Mapping Order entity to OrderResponse");
+	    OrderResponse response = mapToOrderResponse(order);
+	    log.info("Successfully fetched order with order number {}", orderNumber);
+		return response;
 	}
 
 }

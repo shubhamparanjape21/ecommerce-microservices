@@ -5,4 +5,5 @@ import com.japes.orderservice.dto.OrderResponse;
 
 public interface OrderService {
 	OrderResponse placeOrder(CreateOrderRequest request);
+	OrderResponse getOrderByOrderNumber(String orderNumber);
 }
