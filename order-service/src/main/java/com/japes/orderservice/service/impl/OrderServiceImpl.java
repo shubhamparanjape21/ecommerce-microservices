@@ -118,9 +118,12 @@ public class OrderServiceImpl implements OrderService {
 			log.warn("Order not found with order number {}", orderNumber);
 			return new OrderNotFoundException("Order with order number " + orderNumber + " not found");
 		});
-		OrderStatus currentStatus = request.getStatus();
+		OrderStatus currentStatus = order.getStatus();
 		OrderStatus newStatus = request.getStatus();
+		log.debug("Validating status transition from {} to {}", currentStatus, newStatus);
 		if(!isValidStatusTransition(currentStatus, newStatus)) {
+			log.warn("Invalid status transition from {} to {} for order {}",
+		            currentStatus, newStatus, orderNumber);
 			throw new InvalidOrderStatusTransitionException("Cannot change order status from " + currentStatus + " to " + newStatus);
 		}
 		log.debug("Updating order status from {} to {}", order.getStatus(), request.getStatus());
