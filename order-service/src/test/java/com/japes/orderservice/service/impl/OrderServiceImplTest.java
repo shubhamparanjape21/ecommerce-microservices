@@ -3,6 +3,7 @@ package com.japes.orderservice.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
+import com.japes.orderservice.exception.OrderNotFoundException;
 import com.japes.orderservice.repository.OrderRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -121,5 +124,40 @@ public class OrderServiceImplTest {
 
 	    // Verify bidirectional relationship
 	    assertSame(capturedOrder, capturedItem.getOrder());
+	}
+	
+	@Test
+	void shouldGetOrderByOrderNumberSuccessfully() {
+		// Mock
+		when(orderRepository.findByOrderNumber(savedOrder.getOrderNumber())).thenReturn(Optional.of(savedOrder));
+		// Act
+		OrderResponse result = orderServiceImpl.getOrderByOrderNumber(savedOrder.getOrderNumber());
+		// Assert
+		assertNotNull(result);
+		assertEquals(savedOrder.getId(), result.getId());
+		assertEquals(savedOrder.getOrderNumber(), result.getOrderNumber());
+		assertEquals(savedOrder.getUserId(), result.getUserId());
+		assertEquals(savedOrder.getStatus(), result.getStatus());
+		
+		assertEquals(1, result.getItems().size());
+		assertEquals("AIRPODS2USB", result.getItems().get(0).getSkuCode());
+		assertEquals(2, result.getItems().get(0).getQuantity());
+		
+		// Verify
+		verify(orderRepository).findByOrderNumber(savedOrder.getOrderNumber());
+	}
+	
+	@Test
+	void shouldThrowOrderNotFoundExceptionWhenOrderNumberDoesNotExist() {
+		String orderNumber = "ORD-INVALID";
+		// Mock
+		when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
+		
+		// Act + Assert
+		OrderNotFoundException exception = assertThrows(OrderNotFoundException.class, () -> orderServiceImpl.getOrderByOrderNumber(orderNumber));
+		assertEquals("Order with order number " + orderNumber + " not found", exception.getMessage());
+		
+		// Verify
+		verify(orderRepository).findByOrderNumber(orderNumber);
 	}
 }
