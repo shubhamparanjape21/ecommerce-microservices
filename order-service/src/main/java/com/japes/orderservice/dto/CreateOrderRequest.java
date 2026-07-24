@@ -2,6 +2,7 @@ package com.japes.orderservice.dto;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -13,8 +14,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateOrderRequest {
+	@Schema(description = "ID of the user placing the order", example = "1")
 	@NotNull(message = "User ID is required")
 	private Long userId;
+	
+	@Schema(description = "List of order items")
 	@NotEmpty(message = "Order must contain at least one item")
     @Valid
 	private List<OrderItemRequest> items;
