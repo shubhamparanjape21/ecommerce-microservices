@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,10 +22,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import com.japes.orderservice.dto.CreateOrderRequest;
 import com.japes.orderservice.dto.OrderItemRequest;
 import com.japes.orderservice.dto.OrderItemResponse;
+import com.japes.orderservice.dto.OrderPageResponse;
 import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
@@ -40,92 +47,92 @@ public class OrderServiceImplTest {
 	private ModelMapper modelMapper;
 	@InjectMocks
 	private OrderServiceImpl orderServiceImpl;
-	
+
 	private CreateOrderRequest request;
-	private Order order;
 	private Order savedOrder;
 	private OrderResponse response;
-	
+
 	@BeforeEach
 	void setUp() {
-		
+
 		OrderItemRequest itemRequest = new OrderItemRequest();
-	    itemRequest.setSkuCode("AIRPODS2USB");
-	    itemRequest.setQuantity(2);
+		itemRequest.setSkuCode("AIRPODS2USB");
+		itemRequest.setQuantity(2);
 
-	    request = new CreateOrderRequest();
-	    request.setUserId(1L);
-	    request.setItems(List.of(itemRequest));
+		request = new CreateOrderRequest();
+		request.setUserId(1L);
+		request.setItems(List.of(itemRequest));
 
-	    OrderItem savedItem = new OrderItem();
-	    savedItem.setId(1L);
-	    savedItem.setSkuCode("AIRPODS2USB");
-	    savedItem.setQuantity(2);
-	    savedItem.setPrice(BigDecimal.ZERO);
+		OrderItem savedItem = new OrderItem();
+		savedItem.setId(1L);
+		savedItem.setSkuCode("AIRPODS2USB");
+		savedItem.setQuantity(2);
+		savedItem.setPrice(BigDecimal.ZERO);
 
-	    savedOrder = new Order();
-	    savedOrder.setId(1L);
-	    savedOrder.setOrderNumber("ORD-ABC12345");
-	    savedOrder.setUserId(1L);
-	    savedOrder.setStatus(OrderStatus.PENDING);
-	    savedOrder.setOrderItems(List.of(savedItem));
+		savedOrder = new Order();
+		savedOrder.setId(1L);
+		savedOrder.setOrderNumber("ORD-ABC12345");
+		savedOrder.setUserId(1L);
+		savedOrder.setStatus(OrderStatus.PENDING);
+		savedOrder.setOrderItems(List.of(savedItem));
 
-	    savedItem.setOrder(savedOrder);
+		savedItem.setOrder(savedOrder);
 	}
-	
+
 	@Test
 	void shouldPlaceOrderSuccessfully() {
 		// Mock Behavior
 		when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
-		
-		//Act
+
+		// Act
 		OrderResponse result = orderServiceImpl.placeOrder(request);
-		// No need to create OrderResponse because service creates it using mapToOrderResponse()
-		
+		// No need to create OrderResponse because service creates it using
+		// mapToOrderResponse()
+
 		// Assert
 		assertNotNull(result);
 		assertEquals(1L, result.getId());
 		assertEquals("ORD-ABC12345", result.getOrderNumber());
 		assertEquals(1L, result.getUserId());
 		assertEquals(OrderStatus.PENDING, result.getStatus());
-		
+
 		assertNotNull(result.getItems());
 		assertEquals(1, result.getItems().size());
-		
+
 		OrderItemResponse item = result.getItems().get(0);
-		
+
 		assertEquals("AIRPODS2USB", item.getSkuCode());
 		assertEquals(2, item.getQuantity());
 		assertEquals(BigDecimal.ZERO, item.getPrice());
-		
+
 		// Capture the Order passed to repository.save()
-	    ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+		ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
 
-	    verify(orderRepository).save(orderCaptor.capture());
+		verify(orderRepository).save(orderCaptor.capture());
 
-	    Order capturedOrder = orderCaptor.getValue();
+		Order capturedOrder = orderCaptor.getValue();
 
-	    // Assert the Order built by the service
-	    assertNotNull(capturedOrder);
-	    assertNotNull(capturedOrder.getOrderNumber());
-	    assertTrue(capturedOrder.getOrderNumber().startsWith("ORD-"));
+		// Assert the Order built by the service
+		assertNotNull(capturedOrder);
+		assertNotNull(capturedOrder.getOrderNumber());
+		assertTrue(capturedOrder.getOrderNumber().startsWith("ORD-"));
 
-	    assertEquals(1L, capturedOrder.getUserId());
-	    assertEquals(OrderStatus.PENDING, capturedOrder.getStatus());
+		assertEquals(1L, capturedOrder.getUserId());
+		assertEquals(OrderStatus.PENDING, capturedOrder.getStatus());
 
-	    assertNotNull(capturedOrder.getOrderItems());
-	    assertEquals(1, capturedOrder.getOrderItems().size());
+		assertNotNull(capturedOrder.getOrderItems());
+		assertEquals(1, capturedOrder.getOrderItems().size());
 
-	    OrderItem capturedItem = capturedOrder.getOrderItems().get(0);
+		OrderItem capturedItem = capturedOrder.getOrderItems().get(0);
 
-	    assertEquals("AIRPODS2USB", capturedItem.getSkuCode());
-	    assertEquals(2, capturedItem.getQuantity());
-	    assertEquals(BigDecimal.ZERO, capturedItem.getPrice());
+		assertEquals("AIRPODS2USB", capturedItem.getSkuCode());
+		assertEquals(2, capturedItem.getQuantity());
+		assertEquals(BigDecimal.ZERO, capturedItem.getPrice());
 
-	    // Verify bidirectional relationship
-	    assertSame(capturedOrder, capturedItem.getOrder());
+		// Verify bidirectional relationship
+		assertSame(capturedOrder, capturedItem.getOrder());
 	}
-	
+
 	@Test
 	void shouldGetOrderByOrderNumberSuccessfully() {
 		// Mock
@@ -138,26 +145,79 @@ public class OrderServiceImplTest {
 		assertEquals(savedOrder.getOrderNumber(), result.getOrderNumber());
 		assertEquals(savedOrder.getUserId(), result.getUserId());
 		assertEquals(savedOrder.getStatus(), result.getStatus());
-		
+
 		assertEquals(1, result.getItems().size());
 		assertEquals("AIRPODS2USB", result.getItems().get(0).getSkuCode());
 		assertEquals(2, result.getItems().get(0).getQuantity());
-		
+
 		// Verify
 		verify(orderRepository).findByOrderNumber(savedOrder.getOrderNumber());
 	}
-	
+
 	@Test
 	void shouldThrowOrderNotFoundExceptionWhenOrderNumberDoesNotExist() {
 		String orderNumber = "ORD-INVALID";
 		// Mock
 		when(orderRepository.findByOrderNumber(orderNumber)).thenReturn(Optional.empty());
-		
+
 		// Act + Assert
-		OrderNotFoundException exception = assertThrows(OrderNotFoundException.class, () -> orderServiceImpl.getOrderByOrderNumber(orderNumber));
+		OrderNotFoundException exception = assertThrows(OrderNotFoundException.class,
+				() -> orderServiceImpl.getOrderByOrderNumber(orderNumber));
 		assertEquals("Order with order number " + orderNumber + " not found", exception.getMessage());
-		
+
 		// Verify
 		verify(orderRepository).findByOrderNumber(orderNumber);
+	}
+
+	@Test
+	void shouldGetOrdersByUserIdSuccessfully() {
+		// Arrange
+		Pageable pageable = PageRequest.of(0, 5, Sort.by("id").descending());
+		Page<Order> page = new PageImpl<>(List.of(savedOrder), pageable, 1);
+		when(orderRepository.findOrderByUserId(1L, pageable)).thenReturn(page);
+		// Act
+		OrderPageResponse result = orderServiceImpl.getOrdersByUserId(1L, 0, 5, "id", "desc");
+		// Assert
+		assertNotNull(result);
+		assertEquals(1, result.getOrders().size());
+		assertEquals(0, result.getCurrentPage());
+		assertEquals(5, result.getPageSize());
+		assertEquals(1, result.getTotalElements());
+		assertEquals(1, result.getTotalPages());
+
+		assertTrue(result.isFirst());
+		assertTrue(result.isLast());
+
+		OrderResponse order = result.getOrders().get(0);
+
+		assertEquals(savedOrder.getOrderNumber(), order.getOrderNumber());
+		assertEquals(savedOrder.getUserId(), order.getUserId());
+		assertEquals(savedOrder.getStatus(), order.getStatus());
+
+		// Verify
+		verify(orderRepository).findOrderByUserId(1L, pageable);
+	}
+
+	@Test
+	void shouldReturnEmptyOrdersWhenUserHasNoOrders() {
+		// Arrange
+		Pageable pageable = PageRequest.of(0, 5, Sort.by("id").descending());
+		Page<Order> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+		when(orderRepository.findOrderByUserId(1L, pageable)).thenReturn(emptyPage);
+		// Act
+		OrderPageResponse result = orderServiceImpl.getOrdersByUserId(1L, 0, 5, "id", "desc");
+		// Assert
+		assertNotNull(result);
+		assertTrue(result.getOrders().isEmpty());
+		assertEquals(0, result.getCurrentPage());
+		assertEquals(5, result.getPageSize());
+		assertEquals(0, result.getTotalElements());
+		assertEquals(0, result.getTotalPages());
+
+		assertTrue(result.isFirst());
+		assertTrue(result.isLast());
+		
+		// Verify
+		verify(orderRepository).findOrderByUserId(1L, pageable);
 	}
 }
