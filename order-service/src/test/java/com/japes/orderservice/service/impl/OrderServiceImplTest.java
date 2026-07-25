@@ -39,6 +39,7 @@ import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
 import com.japes.orderservice.exception.InvalidOrderStatusTransitionException;
+import com.japes.orderservice.exception.OrderAlreadyDeliveredException;
 import com.japes.orderservice.exception.OrderNotFoundException;
 import com.japes.orderservice.repository.OrderRepository;
 
@@ -219,26 +220,24 @@ public class OrderServiceImplTest {
 
 		assertTrue(result.isFirst());
 		assertTrue(result.isLast());
-		
+
 		// Verify
 		verify(orderRepository).findOrderByUserId(1L, pageable);
 	}
-	
+
 	@Test
 	void shouldUpdateOrderStatusSuccessfully() {
 		// prepare the request
 		UpdateOrderStatusRequest request = new UpdateOrderStatusRequest();
 		request.setStatus(OrderStatus.PAYMENT_PENDING);
 		// Mock repository
-		when(orderRepository.findByOrderNumber(savedOrder.getOrderNumber()))
-        .thenReturn(Optional.of(savedOrder));
+		when(orderRepository.findByOrderNumber(savedOrder.getOrderNumber())).thenReturn(Optional.of(savedOrder));
 
-		when(orderRepository.save(any(Order.class)))
-        .thenReturn(savedOrder);
-		
+		when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+
 		// Act
 		OrderResponse result = orderServiceImpl.updateOrderStatus(savedOrder.getOrderNumber(), request);
-		
+
 		// Assert
 		assertNotNull(result);
 
@@ -246,35 +245,27 @@ public class OrderServiceImplTest {
 		assertEquals(savedOrder.getOrderNumber(), result.getOrderNumber());
 		assertEquals(savedOrder.getUserId(), result.getUserId());
 
-		assertEquals(
-		        OrderStatus.PAYMENT_PENDING,
-		        result.getStatus());
+		assertEquals(OrderStatus.PAYMENT_PENDING, result.getStatus());
 		// Capture saved entity
 		ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
 
 		verify(orderRepository).save(captor.capture());
 
 		Order updatedOrder = captor.getValue();
-		
+
 		// Verify entity
-		assertEquals(
-		        OrderStatus.PAYMENT_PENDING,
-		        updatedOrder.getStatus());
+		assertEquals(OrderStatus.PAYMENT_PENDING, updatedOrder.getStatus());
 
-		assertEquals(
-		        savedOrder.getOrderNumber(),
-		        updatedOrder.getOrderNumber());
+		assertEquals(savedOrder.getOrderNumber(), updatedOrder.getOrderNumber());
 
-		assertEquals(
-		        savedOrder.getUserId(),
-		        updatedOrder.getUserId());
-		
+		assertEquals(savedOrder.getUserId(), updatedOrder.getUserId());
+
 		// Verify repository interactions
 		verify(orderRepository).findByOrderNumber(savedOrder.getOrderNumber());
 
 		verify(orderRepository).save(any(Order.class));
 	}
-	
+
 	@Test
 	void shouldThrowInvalidOrderStatusTransitionException() {
 		// Prepare the request
@@ -283,10 +274,77 @@ public class OrderServiceImplTest {
 		// Mock the repository
 		when(orderRepository.findByOrderNumber(savedOrder.getOrderNumber())).thenReturn(Optional.of(savedOrder));
 		// Act
-		InvalidOrderStatusTransitionException exception = assertThrows(InvalidOrderStatusTransitionException.class, () -> orderServiceImpl.updateOrderStatus(savedOrder.getOrderNumber(), request));
-		assertEquals("Cannot change order status from " + savedOrder.getStatus() + " to " + request.getStatus(), exception.getMessage());
+		InvalidOrderStatusTransitionException exception = assertThrows(InvalidOrderStatusTransitionException.class,
+				() -> orderServiceImpl.updateOrderStatus(savedOrder.getOrderNumber(), request));
+		assertEquals("Cannot change order status from " + savedOrder.getStatus() + " to " + request.getStatus(),
+				exception.getMessage());
 		// Verify
 		verify(orderRepository).findByOrderNumber(savedOrder.getOrderNumber());
+		verify(orderRepository, never()).save(any(Order.class));
+	}
+
+	@Test
+	void shouldCancelOrderSuccessfully() {
+		// Mock
+		when(orderRepository.findByOrderNumber(savedOrder.getOrderNumber())).thenReturn(Optional.of(savedOrder));
+
+		when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+
+		// Act
+		OrderResponse result = orderServiceImpl.cancelOrder(savedOrder.getOrderNumber());
+
+		// Assert Response
+		assertNotNull(result);
+		assertEquals(savedOrder.getId(), result.getId());
+		assertEquals(savedOrder.getOrderNumber(), result.getOrderNumber());
+		assertEquals(savedOrder.getUserId(), result.getUserId());
+		assertEquals(OrderStatus.CANCELLED, result.getStatus());
+
+		// Capture saved Order
+		ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+
+		verify(orderRepository).save(orderCaptor.capture());
+
+		Order cancelledOrder = orderCaptor.getValue();
+
+		// Assert Entity
+		assertEquals(OrderStatus.CANCELLED, cancelledOrder.getStatus());
+
+		// Verify
+		verify(orderRepository).findByOrderNumber(savedOrder.getOrderNumber());
+
+		verify(orderRepository).save(any(Order.class));
+	}
+
+	@Test
+	void shouldThrowOrderAlreadyDeliveredExceptionWhenCancellingDeliveredOrder() {
+		// Arrange
+		savedOrder.setStatus(OrderStatus.DELIVERED);
+		// Mock
+		when(orderRepository.findByOrderNumber(savedOrder.getOrderNumber())).thenReturn(Optional.of(savedOrder));
+		// Act + Assert
+		OrderAlreadyDeliveredException exception = assertThrows(OrderAlreadyDeliveredException.class,
+				() -> orderServiceImpl.cancelOrder(savedOrder.getOrderNumber()));
+		assertEquals("Delivered orders cannot be cancelled", exception.getMessage());
+		// Verify
+		verify(orderRepository).findByOrderNumber(savedOrder.getOrderNumber());
+
+		verify(orderRepository, never()).save(any(Order.class));
+	}
+
+	@Test
+	void shouldThrowOrderAlreadyCancelledExceptionWhenCancellingCancelledOrder() {
+		// Arrange
+		savedOrder.setStatus(OrderStatus.CANCELLED);
+		// Mock
+		when(orderRepository.findByOrderNumber(savedOrder.getOrderNumber())).thenReturn(Optional.of(savedOrder));
+		// Act + Assert
+		OrderAlreadyDeliveredException exception = assertThrows(OrderAlreadyDeliveredException.class,
+				() -> orderServiceImpl.cancelOrder(savedOrder.getOrderNumber()));
+		assertEquals("Order is already cancelled", exception.getMessage());
+		// Verify
+		verify(orderRepository).findByOrderNumber(savedOrder.getOrderNumber());
+
 		verify(orderRepository, never()).save(any(Order.class));
 	}
 }
