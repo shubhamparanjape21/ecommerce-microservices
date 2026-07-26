@@ -1,5 +1,6 @@
 package com.japes.productservice.entity;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import org.springframework.data.annotation.CreatedBy;
@@ -20,7 +21,7 @@ import lombok.Setter;
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public class BaseModel {
+public class BaseModel implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
