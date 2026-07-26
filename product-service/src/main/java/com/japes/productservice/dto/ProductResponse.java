@@ -1,7 +1,5 @@
 package com.japes.productservice.dto;
 
-import java.math.BigDecimal;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,12 +14,18 @@ import lombok.Setter;
 public class ProductResponse {
 	@Schema(description = "Unique product ID", example = "1")
 	private Long id;
-	@Schema(description = "Unique Stock Keeping Unit (SKU) code", example = "IPH15PRO256")
-	private String skuCode;
 	@Schema(description = "Product name", example = "iPhone 15 Pro")
 	private String name;
 	@Schema(description = "Detailed product description", example = "Apple iPhone 15 Pro with 256GB storage and A17 Pro chip.")
 	private String description;
-	@Schema(description = "Product price", example = "129999.00")
-	private BigDecimal price;
+	@Schema(description = "Product brand", example = "Apple")
+	private String brand;
+	@Schema(description = "Product image URL", example = "https://cdn.japes.com/images/iphone16.jpg")
+	private String imageUrl;
+	@Schema(description = "Whether the product is active", example = "true")
+	private Boolean active;
+	@Schema(description = "Category identifier", example = "1")
+	private Long categoryId;
+	@Schema(description = "Category name", example = "Electronics")
+	private String categoryName;
 }

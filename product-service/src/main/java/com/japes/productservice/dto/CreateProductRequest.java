@@ -1,11 +1,8 @@
 package com.japes.productservice.dto;
 
-import java.math.BigDecimal;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,17 +15,11 @@ import lombok.NoArgsConstructor;
 public class CreateProductRequest {
 	
 	@Schema(
-		    description = "Unique SKU code of the product",
-		    example = "IPH15PRO256"
-		)
-	@NotBlank(message = "skuCode is required!")
-	private String skuCode;
-	
-	@Schema(
 		    description = "Product name",
 		    example = "iPhone 15 Pro"
 		)
 	@NotBlank(message = "name is required!")
+	@Size(max = 255, message = "Product name cannot exceed 255 characters")
 	private String name;
 	
 	@Schema(
@@ -40,10 +31,23 @@ public class CreateProductRequest {
 	private String description;
 	
 	@Schema(
-		    description = "Product price",
-		    example = "129999.00"
-		)
-	@NotNull(message = "Price is required")
-	@Positive(message = "Price must be greater than 0")
-	private BigDecimal price;
+            description = "Product brand",
+            example = "Apple"
+    )
+    @NotBlank(message = "Brand is required")
+	private String brand;
+	
+	@Schema(
+            description = "URL of the product image",
+            example = "https://cdn.japes.com/images/iphone16.jpg"
+    )
+    @NotBlank(message = "Image URL is required")
+	private String imageUrl;
+	
+	@Schema(
+            description = "Category identifier",
+            example = "1"
+    )
+    @NotNull(message = "Category is required")
+	private Long categoryId;
 }
