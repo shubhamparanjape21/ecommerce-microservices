@@ -13,7 +13,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "categories")
-public class Category {
+public class Category extends BaseModel{
 	@Column(nullable = false, unique = true)
 	private String name;
 	

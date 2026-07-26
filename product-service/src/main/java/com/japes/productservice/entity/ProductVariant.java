@@ -15,7 +15,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "product_variants")
-public class ProductVariant {
+public class ProductVariant extends BaseModel{
 	
 	@Column(nullable = false, unique = true)
     private String skuCode;

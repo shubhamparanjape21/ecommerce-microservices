@@ -19,7 +19,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Product {
+public class Product extends BaseModel{
 	
 	@Column(nullable = false)
 	private String name;
