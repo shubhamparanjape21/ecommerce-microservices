@@ -7,6 +7,7 @@ import com.japes.productservice.dto.category.CategoryResponse;
 import com.japes.productservice.dto.category.CreateCategoryRequest;
 import com.japes.productservice.entity.Category;
 import com.japes.productservice.exception.category.CategoryAlreadyExistsException;
+import com.japes.productservice.exception.category.CategoryNotFoundException;
 import com.japes.productservice.repository.CategoryRepository;
 import com.japes.productservice.service.CategoryService;
 
@@ -53,6 +54,23 @@ public class CategoryServiceImpl implements CategoryService {
 		response.setDescription(category.getDescription());
 		
 		return response;
+	}
+
+	@Override
+	public CategoryResponse getCategoryById(Long id) {
+		log.info("Fetching category details for ID {}", id);
+		log.debug("Checking whether category with ID {} exists", id);
+
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Category not found with ID {}", id);
+                    return new CategoryNotFoundException(
+                            "Category with ID " + id + " not found");
+                });
+
+        log.info("Successfully fetched category with ID {}", id);
+
+        return mapToCategoryResponse(category);
 	}
 
 }

@@ -2,6 +2,8 @@ package com.japes.productservice.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,4 +38,12 @@ public class CategoryController {
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
+	
+	@GetMapping("/{id}")
+	@Operation(summary = "Get Category By ID", description = "Fetch category details using category ID")
+	public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Long id){
+		log.info("Received request to fetch category with ID {}", id);
+		CategoryResponse response = categoryService.getCategoryById(id);
+		return ResponseEntity.ok(response);
+	}
 }
