@@ -1,0 +1,58 @@
+package com.japes.productservice.service.impl;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+
+import com.japes.productservice.dto.category.CategoryResponse;
+import com.japes.productservice.dto.category.CreateCategoryRequest;
+import com.japes.productservice.entity.Category;
+import com.japes.productservice.exception.category.CategoryAlreadyExistsException;
+import com.japes.productservice.repository.CategoryRepository;
+import com.japes.productservice.service.CategoryService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class CategoryServiceImpl implements CategoryService {
+	private final CategoryRepository categoryRepository;
+	private final ModelMapper modelMapper;
+
+	@Override
+	public CategoryResponse saveCategory(CreateCategoryRequest request) {
+		log.info("Received request to create category '{}'", request.getName());
+
+        log.debug("Checking whether category '{}' already exists", request.getName());
+
+        if (categoryRepository.existsByName(request.getName())) {
+            log.warn("Duplicate category creation attempted with name '{}'", request.getName());
+            throw new CategoryAlreadyExistsException(
+                    "Category with name '" + request.getName() + "' already exists");
+        }
+
+        log.debug("Mapping CreateCategoryRequest to Category entity");
+
+        Category category = modelMapper.map(request, Category.class);
+
+        log.debug("Saving category to database");
+
+        Category savedCategory = categoryRepository.save(category);
+
+        log.info("Successfully created category with ID {}", savedCategory.getId());
+
+        return mapToCategoryResponse(savedCategory);
+	}
+	
+	public CategoryResponse mapToCategoryResponse(Category category) {
+		CategoryResponse response = new CategoryResponse();
+		
+		response.setId(category.getId());
+		response.setName(category.getName());
+		response.setDescription(category.getDescription());
+		
+		return response;
+	}
+
+}
