@@ -1,5 +1,7 @@
 package com.japes.productservice.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,4 +48,12 @@ public class CategoryController {
 		CategoryResponse response = categoryService.getCategoryById(id);
 		return ResponseEntity.ok(response);
 	}
+	
+	@GetMapping
+    @Operation(summary = "Get All Categories", description = "Fetch all available product categories")
+    public ResponseEntity<List<CategoryResponse>> getAllCategories() {
+        log.info("Received request to fetch all categories");
+        List<CategoryResponse> response = categoryService.getAllCategories();
+        return ResponseEntity.ok(response);
+    }
 }

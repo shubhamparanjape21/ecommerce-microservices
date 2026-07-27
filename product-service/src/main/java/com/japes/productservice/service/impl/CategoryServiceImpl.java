@@ -1,5 +1,7 @@
 package com.japes.productservice.service.impl;
 
+import java.util.List;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -71,6 +73,18 @@ public class CategoryServiceImpl implements CategoryService {
         log.info("Successfully fetched category with ID {}", id);
 
         return mapToCategoryResponse(category);
+	}
+
+	@Override
+	public List<CategoryResponse> getAllCategories() {
+		log.info("Fetching all categories");
+		List<Category> categories = categoryRepository.findAll();
+		log.debug("Retrieved {} categories from database", categories.size());
+		List<CategoryResponse> response = categories.stream()
+				.map(this::mapToCategoryResponse)
+				.toList();
+		log.info("Successfully fetched {} categories", response.size());
+        return response;
 	}
 
 }
