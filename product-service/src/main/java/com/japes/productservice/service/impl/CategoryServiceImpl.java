@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.japes.productservice.dto.category.CategoryResponse;
 import com.japes.productservice.dto.category.CreateCategoryRequest;
+import com.japes.productservice.dto.category.UpdateCategoryRequest;
 import com.japes.productservice.entity.Category;
 import com.japes.productservice.exception.category.CategoryAlreadyExistsException;
 import com.japes.productservice.exception.category.CategoryNotFoundException;
@@ -85,6 +86,37 @@ public class CategoryServiceImpl implements CategoryService {
 				.toList();
 		log.info("Successfully fetched {} categories", response.size());
         return response;
+	}
+
+	@Override
+	public CategoryResponse updateCategory(Long id, UpdateCategoryRequest request) {
+		log.info("Updating category with ID {}", id);
+		
+        log.debug("Checking whether category with ID {} exists", id);
+        
+        Category category = categoryRepository.findById(id)
+        		.orElseThrow(() -> {
+        			log.warn("Category not found with ID {}", id);
+        			return new CategoryNotFoundException("Category with ID " + id + " not found");
+        		});
+        
+        if(!category.getName().equalsIgnoreCase(request.getName()) && categoryRepository.existsByName(request.getName())) {
+        	log.warn("Another category with name {} already exists", request.getName());
+        	throw new CategoryAlreadyExistsException("Category with name " + request.getName() + " already exists");
+        }
+        log.debug("Updating category fields");
+        
+        category.setName(request.getName());
+        
+        category.setDescription(request.getDescription());
+        
+        log.debug("Saving updated category");
+        
+        Category updatedCategory = categoryRepository.save(category);
+        
+        log.info("Successfully updated category with ID {}", id);
+        
+        return mapToCategoryResponse(updatedCategory);
 	}
 
 }

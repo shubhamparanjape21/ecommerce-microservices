@@ -7,12 +7,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.productservice.dto.category.CategoryResponse;
 import com.japes.productservice.dto.category.CreateCategoryRequest;
+import com.japes.productservice.dto.category.UpdateCategoryRequest;
 import com.japes.productservice.service.CategoryService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,6 +56,14 @@ public class CategoryController {
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
         log.info("Received request to fetch all categories");
         List<CategoryResponse> response = categoryService.getAllCategories();
+        return ResponseEntity.ok(response);
+    }
+	
+	@PutMapping("/{id}")
+	@Operation(summary = "Update Category", description = "Updates an existing category")
+    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id, @RequestBody @Valid UpdateCategoryRequest request) {
+		log.info("Received request to update category {}", id);
+        CategoryResponse response = categoryService.updateCategory(id, request);
         return ResponseEntity.ok(response);
     }
 }
