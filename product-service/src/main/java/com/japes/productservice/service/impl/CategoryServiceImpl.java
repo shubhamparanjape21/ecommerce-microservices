@@ -10,8 +10,10 @@ import com.japes.productservice.dto.category.CreateCategoryRequest;
 import com.japes.productservice.dto.category.UpdateCategoryRequest;
 import com.japes.productservice.entity.Category;
 import com.japes.productservice.exception.category.CategoryAlreadyExistsException;
+import com.japes.productservice.exception.category.CategoryInUseException;
 import com.japes.productservice.exception.category.CategoryNotFoundException;
 import com.japes.productservice.repository.CategoryRepository;
+import com.japes.productservice.repository.ProductRepository;
 import com.japes.productservice.service.CategoryService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
+
+    private final ProductRepository productRepository;
 	private final CategoryRepository categoryRepository;
 	private final ModelMapper modelMapper;
 
@@ -117,6 +121,29 @@ public class CategoryServiceImpl implements CategoryService {
         log.info("Successfully updated category with ID {}", id);
         
         return mapToCategoryResponse(updatedCategory);
+	}
+
+	@Override
+	public void deleteCategory(Long id) {
+		log.info("Received request to delete category with ID {}", id);
+
+        log.debug("Checking whether category with ID {} exists", id);
+
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Category not found with ID {}", id);
+                    return new CategoryNotFoundException(
+                            "Category with ID " + id + " not found");
+                });
+        if(productRepository.existsByCategoryId(id)) {
+        	log.warn("Category is associated with existing products");
+        	throw new CategoryInUseException("Category cannot be deleted because it is associated with existing products");
+        }
+        log.debug("Deleting category from database");
+
+        categoryRepository.delete(category);
+
+        log.info("Successfully deleted category with ID {}", id);
 	}
 
 }
