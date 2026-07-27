@@ -1,0 +1,39 @@
+package com.japes.productservice.controller;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.japes.productservice.dto.category.CategoryResponse;
+import com.japes.productservice.dto.category.CreateCategoryRequest;
+import com.japes.productservice.service.CategoryService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@RestController
+@Slf4j
+@RequestMapping("/api/v1/categories")
+@RequiredArgsConstructor
+@Tag(name = "Category Controller", description = "APIs for managing product categories")
+public class CategoryController {
+	private final CategoryService categoryService;
+	
+	@PostMapping
+    @Operation(summary = "Create Category", description = "Creates a new product category")
+    public ResponseEntity<CategoryResponse> createCategory(
+            @RequestBody @Valid CreateCategoryRequest request) {
+
+        log.info("Received request to create category '{}'", request.getName());
+
+        CategoryResponse response = categoryService.saveCategory(request);
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+}

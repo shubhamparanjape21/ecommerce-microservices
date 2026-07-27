@@ -22,7 +22,7 @@ public class CategoryServiceImpl implements CategoryService {
 
 	@Override
 	public CategoryResponse saveCategory(CreateCategoryRequest request) {
-		log.info("Received request to create category '{}'", request.getName());
+		log.info("Creating category with name '{}'", request.getName());
 
         log.debug("Checking whether category '{}' already exists", request.getName());
 
