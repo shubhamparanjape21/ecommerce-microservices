@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -187,6 +188,99 @@ public class CategoryServiceImplTest {
 	    assertEquals(category2.getDescription(), responses.get(1).getDescription());
 	    // Verify
 	    verify(categoryRepository).findAll();
+	    verifyNoMoreInteractions(categoryRepository);
+	}
+	
+	@Test
+	void shouldUpdateCategorySuccessfully() {
+	    // Arrange
+	    when(categoryRepository.findById(category.getId()))
+	            .thenReturn(Optional.of(category));
+
+	    when(categoryRepository.existsByName(updateRequest.getName()))
+	            .thenReturn(false);
+
+	    when(categoryRepository.save(any(Category.class)))
+	            .thenReturn(category);
+
+	    // Act
+	    CategoryResponse response =
+	            categoryServiceImpl.updateCategory(category.getId(), updateRequest);
+
+	    // Assert
+	    assertNotNull(response);
+
+	    assertEquals(category.getId(), response.getId());
+	    assertEquals(updateRequest.getName(), response.getName());
+	    assertEquals(updateRequest.getDescription(), response.getDescription());
+
+	    ArgumentCaptor<Category> categoryCaptor =
+	            ArgumentCaptor.forClass(Category.class);
+
+	    verify(categoryRepository).save(categoryCaptor.capture());
+
+	    Category capturedCategory = categoryCaptor.getValue();
+
+	    assertEquals(updateRequest.getName(), capturedCategory.getName());
+	    assertEquals(updateRequest.getDescription(), capturedCategory.getDescription());
+	    
+	    // Verify
+	    verify(categoryRepository).findById(category.getId());
+	    verify(categoryRepository).existsByName(updateRequest.getName());
+	    verify(categoryRepository).save(any(Category.class));
+	    verifyNoMoreInteractions(categoryRepository);
+	}
+	
+	@Test
+	void shouldThrowCategoryNotFoundExceptionWhenUpdating() {
+	    // Arrange
+	    Long categoryId = 1L;
+
+	    when(categoryRepository.findById(categoryId))
+	            .thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    CategoryNotFoundException exception = assertThrows(
+	            CategoryNotFoundException.class,
+	            () -> categoryServiceImpl.updateCategory(categoryId, updateRequest)
+	    );
+
+	    assertEquals(
+	            "Category with ID " + categoryId + " not found",
+	            exception.getMessage()
+	    );
+
+	    // Verify
+	    verify(categoryRepository).findById(categoryId);
+	    verify(categoryRepository, never()).existsByName(anyString());
+	    verify(categoryRepository, never()).save(any(Category.class));
+	    verifyNoMoreInteractions(categoryRepository);
+	}
+	
+	@Test
+	void shouldThrowCategoryAlreadyExistsExceptionWhenUpdating() {
+	    // Arrange
+	    when(categoryRepository.findById(category.getId()))
+	            .thenReturn(Optional.of(category));
+
+	    when(categoryRepository.existsByName(updateRequest.getName()))
+	            .thenReturn(true);
+
+	    // Act & Assert
+	    CategoryAlreadyExistsException exception = assertThrows(
+	            CategoryAlreadyExistsException.class,
+	            () -> categoryServiceImpl.updateCategory(category.getId(), updateRequest)
+	    );
+
+	    assertEquals(
+	            "Category with name " + updateRequest.getName() + " already exists",
+	            exception.getMessage()
+	    );
+
+	    // Verify
+	    verify(categoryRepository).findById(category.getId());
+	    verify(categoryRepository).existsByName(updateRequest.getName());
+	    verify(categoryRepository, never()).save(any(Category.class));
 	    verifyNoMoreInteractions(categoryRepository);
 	}
 }
