@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -155,6 +156,37 @@ public class CategoryServiceImplTest {
 	    );
 	    // Verify
 	    verify(categoryRepository).findById(categoryId);
+	    verifyNoMoreInteractions(categoryRepository);
+	}
+	
+	@Test
+	void shouldReturnAllCategories() {
+	    // Arrange
+	    Category category2 = new Category();
+	    category2.setId(2L);
+	    category2.setName("Fashion");
+	    category2.setDescription("Clothing and Accessories");
+
+	    List<Category> categories = List.of(category, category2);
+
+	    when(categoryRepository.findAll()).thenReturn(categories);
+
+	    // Act
+	    List<CategoryResponse> responses = categoryServiceImpl.getAllCategories();
+
+	    // Assert
+	    assertNotNull(responses);
+	    assertEquals(2, responses.size());
+
+	    assertEquals(category.getId(), responses.get(0).getId());
+	    assertEquals(category.getName(), responses.get(0).getName());
+	    assertEquals(category.getDescription(), responses.get(0).getDescription());
+
+	    assertEquals(category2.getId(), responses.get(1).getId());
+	    assertEquals(category2.getName(), responses.get(1).getName());
+	    assertEquals(category2.getDescription(), responses.get(1).getDescription());
+	    // Verify
+	    verify(categoryRepository).findAll();
 	    verifyNoMoreInteractions(categoryRepository);
 	}
 }
