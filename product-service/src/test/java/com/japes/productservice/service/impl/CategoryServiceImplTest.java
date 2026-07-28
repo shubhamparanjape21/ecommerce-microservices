@@ -28,6 +28,7 @@ import com.japes.productservice.dto.category.CreateCategoryRequest;
 import com.japes.productservice.dto.category.UpdateCategoryRequest;
 import com.japes.productservice.entity.Category;
 import com.japes.productservice.exception.category.CategoryAlreadyExistsException;
+import com.japes.productservice.exception.category.CategoryInUseException;
 import com.japes.productservice.exception.category.CategoryNotFoundException;
 import com.japes.productservice.repository.CategoryRepository;
 import com.japes.productservice.repository.ProductRepository;
@@ -282,5 +283,51 @@ public class CategoryServiceImplTest {
 	    verify(categoryRepository).existsByName(updateRequest.getName());
 	    verify(categoryRepository, never()).save(any(Category.class));
 	    verifyNoMoreInteractions(categoryRepository);
+	}
+	
+	@Test
+	void shouldDeleteCategorySuccessfully() {
+	    // Arrange
+	    when(categoryRepository.findById(category.getId()))
+	            .thenReturn(Optional.of(category));
+
+	    when(productRepository.existsByCategoryId(category.getId()))
+	            .thenReturn(false);
+
+	    // Act
+	    categoryServiceImpl.deleteCategory(category.getId());
+
+	    // Verify
+	    verify(categoryRepository).findById(category.getId());
+	    verify(productRepository).existsByCategoryId(category.getId());
+	    verify(categoryRepository).delete(category);
+	    verifyNoMoreInteractions(categoryRepository, productRepository);
+	}
+	
+	@Test
+	void shouldThrowCategoryInUseException() {
+	    // Arrange
+	    when(categoryRepository.findById(category.getId()))
+	            .thenReturn(Optional.of(category));
+
+	    when(productRepository.existsByCategoryId(category.getId()))
+	            .thenReturn(true);
+
+	    // Act & Assert
+	    CategoryInUseException exception = assertThrows(
+	            CategoryInUseException.class,
+	            () -> categoryServiceImpl.deleteCategory(category.getId())
+	    );
+
+	    assertEquals(
+	            "Category cannot be deleted because it is associated with existing products",
+	            exception.getMessage()
+	    );
+
+	    // Verify
+	    verify(categoryRepository).findById(category.getId());
+	    verify(productRepository).existsByCategoryId(category.getId());
+	    verify(categoryRepository, never()).delete(any(Category.class));
+	    verifyNoMoreInteractions(categoryRepository, productRepository);
 	}
 }
