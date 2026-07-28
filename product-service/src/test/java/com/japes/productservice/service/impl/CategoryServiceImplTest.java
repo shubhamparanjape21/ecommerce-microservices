@@ -10,6 +10,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +26,7 @@ import com.japes.productservice.dto.category.CreateCategoryRequest;
 import com.japes.productservice.dto.category.UpdateCategoryRequest;
 import com.japes.productservice.entity.Category;
 import com.japes.productservice.exception.category.CategoryAlreadyExistsException;
+import com.japes.productservice.exception.category.CategoryNotFoundException;
 import com.japes.productservice.repository.CategoryRepository;
 import com.japes.productservice.repository.ProductRepository;
 
@@ -109,9 +112,49 @@ public class CategoryServiceImplTest {
 	            "Category with name '" + createRequest.getName() + "' already exists",
 	            exception.getMessage()
 	    );
+	    // Verify
 	    verify(categoryRepository).existsByName(createRequest.getName());
 	    verify(categoryRepository, never()).save(any(Category.class));
 	    verify(modelMapper, never()).map(any(), eq(Category.class));
 	    verifyNoMoreInteractions(categoryRepository, modelMapper);
+	}
+	
+	@Test
+	void shouldReturnCategoryById() {
+	    // Arrange
+	    when(categoryRepository.findById(category.getId()))
+	            .thenReturn(Optional.of(category));
+	    // Act
+	    CategoryResponse response = categoryServiceImpl.getCategoryById(category.getId());
+	    // Assert
+	    assertNotNull(response);
+	    assertEquals(category.getId(), response.getId());
+	    assertEquals(category.getName(), response.getName());
+	    assertEquals(category.getDescription(), response.getDescription());
+	    // Verify
+	    verify(categoryRepository).findById(category.getId());
+	    verifyNoMoreInteractions(categoryRepository);
+	}
+	
+	@Test
+	void shouldThrowCategoryNotFoundException() {
+	    // Arrange
+	    Long categoryId = 1L;
+	    // Mock
+	    when(categoryRepository.findById(categoryId))
+	            .thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    CategoryNotFoundException exception = assertThrows(
+	            CategoryNotFoundException.class,
+	            () -> categoryServiceImpl.getCategoryById(categoryId)
+	    );
+	    assertEquals(
+	            "Category with ID " + categoryId + " not found",
+	            exception.getMessage()
+	    );
+	    // Verify
+	    verify(categoryRepository).findById(categoryId);
+	    verifyNoMoreInteractions(categoryRepository);
 	}
 }
