@@ -1,5 +1,6 @@
 package com.japes.productservice.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -41,5 +42,5 @@ public class Product extends BaseModel{
 	private Category category;
 	
 	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<ProductVariant> variants;
+	private List<ProductVariant> variants = new ArrayList<>();
 }
