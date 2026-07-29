@@ -1,7 +1,5 @@
 package com.japes.productservice.service.impl;
-
 import java.util.List;
-import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -14,9 +12,11 @@ import com.japes.productservice.dto.CreateProductRequest;
 import com.japes.productservice.dto.ProductPageResponse;
 import com.japes.productservice.dto.ProductResponse;
 import com.japes.productservice.dto.UpdateProductRequest;
+import com.japes.productservice.entity.Category;
 import com.japes.productservice.entity.Product;
-import com.japes.productservice.exception.ProductAlreadyExistsException;
 import com.japes.productservice.exception.ProductNotFoundException;
+import com.japes.productservice.exception.category.CategoryNotFoundException;
+import com.japes.productservice.repository.CategoryRepository;
 import com.japes.productservice.repository.ProductRepository;
 import com.japes.productservice.service.ProductService;
 
@@ -28,22 +28,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProductServiceImpl implements ProductService {
 	private final ProductRepository productRepository;
+	private final CategoryRepository categoryRepository;
 	private final ModelMapper modelMapper;
 
 	@Override
-	public ProductResponse saveProduct(CreateProductRequest productRequest) {
-		log.info("Creating product with SKU {}", productRequest.getSkuCode());
-		log.debug("Checking if product with SKU {} already exists", productRequest.getSkuCode());
-		if(productRepository.existsBySkuCode(productRequest.getSkuCode())) {
-			log.warn("Duplicate product creation attempted for SKU {}", productRequest.getSkuCode());
-			throw new ProductAlreadyExistsException("Product with SKU " + productRequest.getSkuCode() + " already exists");
-		}
+	public ProductResponse saveProduct(CreateProductRequest request) {
+		log.info("Received request to create product '{}'", request.getName());
+		log.debug("Checking whether category with ID {} exists", request.getCategoryId());
+		Category category = categoryRepository.findById(request.getCategoryId())
+				.orElseThrow(() -> {
+					log.warn("Category not found with ID {}", request.getCategoryId());
+					return new CategoryNotFoundException("Category with ID " + request.getCategoryId() + " not found");
+				});
+		
 		log.debug("Mapping CreateProductRequest to Product entity");
-		Product product = modelMapper.map(productRequest, Product.class);
+		Product product = modelMapper.map(request, Product.class);
+		product.setCategory(category);
 		log.debug("Saving product to database");
 		Product savedProduct = productRepository.save(product);
 		log.info("Product created successfully with ID {}", savedProduct.getId());
-		return modelMapper.map(savedProduct, ProductResponse.class);
+		return mapToProductResponse(savedProduct);
 	}
 
 	@Override
@@ -137,5 +141,21 @@ public class ProductServiceImpl implements ProductService {
 		ProductResponse response = modelMapper.map(product, ProductResponse.class);
 		log.info("Successfully fetched product with SKU {}", skuCode);
 		return response;
+	}
+	
+	public ProductResponse mapToProductResponse(Product product) {
+		ProductResponse response = new ProductResponse();
+		
+		response.setId(product.getId());
+		response.setName(product.getName());
+	    response.setDescription(product.getDescription());
+	    response.setBrand(product.getBrand());
+	    response.setImageUrl(product.getImageUrl());
+	    response.setActive(product.isActive());
+
+	    response.setCategoryId(product.getCategory().getId());
+	    response.setCategoryName(product.getCategory().getName());
+	    
+	    return response;
 	}
 }
