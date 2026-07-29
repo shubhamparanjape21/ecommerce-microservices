@@ -1,4 +1,4 @@
-package com.japes.productservice.dto;
+package com.japes.productservice.dto.product;
 
 import java.util.List;
 

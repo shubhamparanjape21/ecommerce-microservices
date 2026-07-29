@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.japes.productservice.dto.CreateProductRequest;
-import com.japes.productservice.dto.ProductPageResponse;
-import com.japes.productservice.dto.ProductResponse;
-import com.japes.productservice.dto.UpdateProductRequest;
+import com.japes.productservice.dto.product.CreateProductRequest;
+import com.japes.productservice.dto.product.ProductPageResponse;
+import com.japes.productservice.dto.product.ProductResponse;
+import com.japes.productservice.dto.product.UpdateProductRequest;
 import com.japes.productservice.service.ProductService;
 
 import io.swagger.v3.oas.annotations.Operation;

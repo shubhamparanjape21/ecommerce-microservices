@@ -8,10 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import com.japes.productservice.dto.CreateProductRequest;
-import com.japes.productservice.dto.ProductPageResponse;
-import com.japes.productservice.dto.ProductResponse;
-import com.japes.productservice.dto.UpdateProductRequest;
+import com.japes.productservice.dto.product.CreateProductRequest;
+import com.japes.productservice.dto.product.ProductPageResponse;
+import com.japes.productservice.dto.product.ProductResponse;
+import com.japes.productservice.dto.product.UpdateProductRequest;
 import com.japes.productservice.entity.Category;
 import com.japes.productservice.entity.Product;
 import com.japes.productservice.exception.ProductNotFoundException;

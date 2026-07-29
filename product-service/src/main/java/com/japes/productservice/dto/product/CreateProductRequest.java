@@ -1,4 +1,4 @@
-package com.japes.productservice.dto;
+package com.japes.productservice.dto.product;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Request payload for updating a product")
-public class UpdateProductRequest {
+@Schema(description = "Request payload for creating a new product")
+public class CreateProductRequest {
 	
 	@Schema(
 		    description = "Product name",
@@ -50,11 +50,4 @@ public class UpdateProductRequest {
     )
     @NotNull(message = "Category is required")
 	private Long categoryId;
-	
-	@Schema(
-            description = "Product availability status",
-            example = "true"
-    )
-    @NotNull(message = "Product status is required")
-	private boolean active;
 }
