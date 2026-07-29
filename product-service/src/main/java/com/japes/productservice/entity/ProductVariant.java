@@ -34,6 +34,6 @@ public class ProductVariant extends BaseModel{
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
     
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VariantAttribute> attributes = new ArrayList<>();
 }
