@@ -62,8 +62,7 @@ public class ProductServiceImpl implements ProductService {
 		log.debug("Mapping Product entities to ProductResponse DTOs");
 		List<ProductResponse> responses = productPage.getContent()
 					.stream()
-					.map(product ->
-							modelMapper.map(product, ProductResponse.class))
+					.map(this::mapToProductResponse)
 					.toList();
 		ProductPageResponse response = new ProductPageResponse(responses,productPage.getNumber(),productPage.getTotalPages(),productPage.getTotalElements(),productPage.getSize(),productPage.isFirst(),productPage.isLast());
 		log.info(
@@ -85,7 +84,7 @@ public class ProductServiceImpl implements ProductService {
 					return new ProductNotFoundException("Product with ID " + id + " not found");
 				});
 		log.debug("Mapping Product entity to ProductResponse");
-		ProductResponse response = modelMapper.map(product, ProductResponse.class);
+		ProductResponse response = mapToProductResponse(product);
 		log.info("Successfully fetched product with ID {}", id);
 		return response;
 	}
@@ -128,27 +127,11 @@ public class ProductServiceImpl implements ProductService {
 					return new ProductNotFoundException("Product with ID " + id + " not found");
 				});
 		log.debug("Deleting product with ID {} from database", id);
-		productRepository.deleteById(id);
+		productRepository.delete(existingProduct);
 		log.info("Product deleted successfully");
 	}
-
-	@Override
-	public ProductResponse getProductBySkuCode(String skuCode) {
-		log.info("Received request to search product with SkuCode {}", skuCode);
-		log.debug("Checking whether product with SkuCode {} exists", skuCode);
-		Product product = productRepository.findBySkuCode(skuCode)
-				.orElseThrow(() -> {
-					log.warn("Product not found with SkuCode {}", skuCode);
-					return new ProductNotFoundException("Product with SkuCode " + skuCode + " not found");
-				});
-		
-		log.debug("Mapping Product entity to ProductResponse");
-		ProductResponse response = modelMapper.map(product, ProductResponse.class);
-		log.info("Successfully fetched product with SKU {}", skuCode);
-		return response;
-	}
 	
-	public ProductResponse mapToProductResponse(Product product) {
+	private ProductResponse mapToProductResponse(Product product) {
 		ProductResponse response = new ProductResponse();
 		
 		response.setId(product.getId());

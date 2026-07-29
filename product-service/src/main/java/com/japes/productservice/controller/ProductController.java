@@ -97,7 +97,7 @@ public class ProductController {
 		    @ApiResponse(responseCode = "404", description = "Product not found", content = @Content),
 		    @ApiResponse(responseCode = "409", description = "Duplicate SKU", content = @Content)
 		})
-	@PutMapping("/update/{id}")
+	@PutMapping("/{id}")
 	public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody @Valid UpdateProductRequest updateProductRequest) {
 		ProductResponse response = productService.updateProduct(id, updateProductRequest);
 		return new ResponseEntity<ProductResponse>(response, HttpStatus.OK);
@@ -115,20 +115,5 @@ public class ProductController {
 	public ResponseEntity<Void> deleteProduct(@Parameter(description = "Unique product ID", example = "1") @PathVariable Long id) {
 		productService.deleteProduct(id);
 		return ResponseEntity.noContent().build();
-	}
-	
-	@Operation(
-		    summary = "Search product by SKU",
-		    description = "Fetches a product using its unique SKU code."
-		)
-		@ApiResponses({
-		    @ApiResponse(responseCode = "200", description = "Product found"),
-		    @ApiResponse(responseCode = "404", description = "Product not found", content = @Content)
-		})
-	@GetMapping("/sku/{skuCode}")
-	public ResponseEntity<ProductResponse> getProductBySkuCode(@Parameter(description = "Unique SKU code", example = "IPH15PRO256") @PathVariable String skuCode) {
-		log.info("Received request to fetch product with SKU {}", skuCode);
-		ProductResponse response = productService.getProductBySkuCode(skuCode);
-		return ResponseEntity.ok(response);
 	}
 }
