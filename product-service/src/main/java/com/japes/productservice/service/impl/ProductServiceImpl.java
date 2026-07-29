@@ -91,7 +91,7 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public ProductResponse updateProduct(Long id, UpdateProductRequest updateProductRequest) {
+	public ProductResponse updateProduct(Long id, UpdateProductRequest request) {
 		log.info("Received request to update product with ID {}", id);
 		log.debug("Checking whether product with ID {} exists", id);
 		Product existingProduct = productRepository.findById(id)
@@ -99,18 +99,23 @@ public class ProductServiceImpl implements ProductService {
 					log.warn("Product not found with ID {}", id);
 					return new ProductNotFoundException("Product with ID " + id + " not found");
 				});
-		if(!existingProduct.getSkuCode().equals(updateProductRequest.getSkuCode()) && productRepository.existsBySkuCode(updateProductRequest.getSkuCode())) {
-			log.warn("Duplicate SKU {} provided for update ", updateProductRequest.getSkuCode());
-			throw new ProductAlreadyExistsException("Another product with SKU " + updateProductRequest.getSkuCode() + " already exists");
-		}
-		log.debug("Mapping UpdateProductRequest to existing product entity");
-		modelMapper.map(updateProductRequest, existingProduct);
-		log.debug("Saving updated product to database");
+		log.debug("Checking whether category with ID {} exists", request.getCategoryId());
+		Category category = categoryRepository.findById(request.getCategoryId())
+				.orElseThrow(() -> {
+					log.warn("Category not found with ID {}", request.getCategoryId());
+					return new CategoryNotFoundException("Category with ID " + request.getCategoryId() + " not found");
+				});
+		log.debug("Updating product details");
+		existingProduct.setName(request.getName());
+		existingProduct.setDescription(request.getDescription());
+		existingProduct.setBrand(request.getBrand());
+		existingProduct.setImageUrl(request.getImageUrl());
+		existingProduct.setActive(request.isActive());
+		existingProduct.setCategory(category);
+		log.debug("Saving updated product");
 		Product updatedProduct = productRepository.save(existingProduct);
-		log.debug("Mapping Product entity to ProductResponse");
-		ProductResponse response = modelMapper.map(updatedProduct, ProductResponse.class);
-		log.info("Successfully updated product with ID {}", response.getId());
-		return response;
+		log.info("Successfully updated product with ID {}", updatedProduct.getId());
+		return mapToProductResponse(updatedProduct);
 	}
 
 	@Override
