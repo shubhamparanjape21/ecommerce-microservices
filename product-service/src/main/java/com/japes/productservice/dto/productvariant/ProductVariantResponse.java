@@ -15,5 +15,5 @@ public class ProductVariantResponse {
     private String skuCode;
     private BigDecimal price;
     private Boolean active;
-    private List<VariantAttributeRequest> attributes;
+    private List<VariantAttributeResponse> attributes;
 }

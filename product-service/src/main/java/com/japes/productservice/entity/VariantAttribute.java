@@ -13,7 +13,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "variant_attributes")
-public class VariantAttribute {
+public class VariantAttribute extends BaseModel{
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "product_variant_id", nullable = false)
 	private ProductVariant productVariant;
