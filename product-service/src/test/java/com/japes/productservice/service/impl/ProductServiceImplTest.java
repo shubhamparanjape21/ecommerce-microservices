@@ -33,8 +33,8 @@ import com.japes.productservice.dto.product.ProductPageResponse;
 import com.japes.productservice.dto.product.ProductResponse;
 import com.japes.productservice.dto.product.UpdateProductRequest;
 import com.japes.productservice.entity.Product;
-import com.japes.productservice.exception.ProductAlreadyExistsException;
-import com.japes.productservice.exception.ProductNotFoundException;
+import com.japes.productservice.exception.product.ProductAlreadyExistsException;
+import com.japes.productservice.exception.product.ProductNotFoundException;
 import com.japes.productservice.repository.ProductRepository;
 
 @ExtendWith(MockitoExtension.class)

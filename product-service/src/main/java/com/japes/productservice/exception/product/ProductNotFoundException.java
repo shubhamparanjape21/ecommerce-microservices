@@ -1,4 +1,4 @@
-package com.japes.productservice.exception;
+package com.japes.productservice.exception.product;
 
 public class ProductNotFoundException extends RuntimeException {
 

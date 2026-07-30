@@ -11,6 +11,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.japes.productservice.exception.product.ProductAlreadyExistsException;
+import com.japes.productservice.exception.product.ProductNotFoundException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
