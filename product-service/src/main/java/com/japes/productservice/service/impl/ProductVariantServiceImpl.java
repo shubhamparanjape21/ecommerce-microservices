@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.japes.productservice.dto.productvariant.CreateProductVariantRequest;
 import com.japes.productservice.dto.productvariant.ProductVariantResponse;
+import com.japes.productservice.dto.productvariant.UpdateProductVariantRequest;
 import com.japes.productservice.dto.productvariant.VariantAttributeResponse;
 import com.japes.productservice.entity.Product;
 import com.japes.productservice.entity.ProductVariant;
@@ -30,7 +31,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 	private final ModelMapper modelMapper;
 
 	@Override
-	public ProductVariantResponse createVariant(CreateProductVariantRequest request) {
+	public ProductVariantResponse createProductVariant(CreateProductVariantRequest request) {
 		log.info("Creating product variant with SKU {}", request.getSkuCode());
 
 		log.debug("Checking whether product with ID {} exists", request.getProductId());
@@ -78,7 +79,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 	}
 
 	@Override
-	public ProductVariantResponse getVariantById(Long id) {
+	public ProductVariantResponse getProductVariantById(Long id) {
 		log.info("Fetching product variant with ID {}", id);
 		ProductVariant variant = productVariantRepository.findById(id)
 				.orElseThrow(() -> {
@@ -90,7 +91,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 	}
 
 	@Override
-	public ProductVariantResponse getVariantBySkuCode(String skuCode) {
+	public ProductVariantResponse getProductVariantBySkuCode(String skuCode) {
 		log.info("Fetching product variant with SKU {}", skuCode);
 		ProductVariant variant = productVariantRepository.findBySkuCode(skuCode)
 				.orElseThrow(() -> {
@@ -102,7 +103,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 	}
 
 	@Override
-	public List<ProductVariantResponse> getVariantsByProductId(Long productId) {
+	public List<ProductVariantResponse> getProductVariantsByProductId(Long productId) {
 		log.info("Fetching variants for product {}", productId);
 	    productRepository.findById(productId)
 	            .orElseThrow(() -> {
@@ -116,6 +117,56 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 	    return variants.stream()
 	            .map(this::mapToProductVariantResponse)
 	            .toList();
+	}
+	
+	@Override
+	public ProductVariantResponse updateProductVariant(Long id, UpdateProductVariantRequest request) {
+		log.info("Updating product variant with ID {}", id);
+	    log.debug("Checking whether product variant with ID {} exists", id);
+	    
+	    ProductVariant existingVariant = productVariantRepository.findById(id)
+	            .orElseThrow(() -> {
+	                log.warn("Product variant not found with ID {}", id);
+	                return new ProductVariantNotFoundException(
+	                        "Product variant with ID " + id + " not found");
+	            });
+
+	    if (!existingVariant.getSkuCode().equals(request.getSkuCode()) && productVariantRepository.existsBySkuCode(request.getSkuCode())) {
+	        log.warn("Duplicate SKU {} provided for update", request.getSkuCode());
+	        throw new ProductVariantAlreadyExistsException(
+	                "Another product variant with SKU " + request.getSkuCode() + " already exists");
+	    }
+	    log.debug("Mapping UpdateProductVariantRequest to existing ProductVariant");
+
+	    modelMapper.map(request, existingVariant);
+
+	    log.debug("Saving updated product variant");
+
+	    ProductVariant updatedVariant = productVariantRepository.save(existingVariant);
+
+	    log.info("Successfully updated product variant with ID {}", updatedVariant.getId());
+
+	    return mapToProductVariantResponse(updatedVariant);
+	}
+	
+	@Override
+	public void deleteProductVariant(Long id) {
+		log.info("Deleting product variant with ID {}", id);
+
+	    log.debug("Checking whether product variant with ID {} exists", id);
+
+	    ProductVariant existingVariant = productVariantRepository.findById(id)
+	            .orElseThrow(() -> {
+	                log.warn("Product variant not found with ID {}", id);
+	                return new ProductVariantNotFoundException(
+	                        "Product variant with ID " + id + " not found");
+	            });
+
+	    log.debug("Deleting product variant with ID {} from database", id);
+
+	    productVariantRepository.delete(existingVariant);
+
+	    log.info("Successfully deleted product variant with ID {}", id);	
 	}
 	
 	private ProductVariantResponse mapToProductVariantResponse(ProductVariant variant) {

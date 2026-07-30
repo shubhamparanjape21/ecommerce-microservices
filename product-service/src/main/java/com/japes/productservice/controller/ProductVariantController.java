@@ -4,15 +4,18 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.productservice.dto.productvariant.CreateProductVariantRequest;
 import com.japes.productservice.dto.productvariant.ProductVariantResponse;
+import com.japes.productservice.dto.productvariant.UpdateProductVariantRequest;
 import com.japes.productservice.service.ProductVariantService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,7 +36,7 @@ public class ProductVariantController {
     @ApiResponse(responseCode = "201", description = "Product Variant created successfully")
 	public ResponseEntity<ProductVariantResponse> createVariant(@Valid @RequestBody CreateProductVariantRequest request) {
 		log.info("Received request to create product variant for product ID {}", request.getProductId());
-		ProductVariantResponse response = productVariantService.createVariant(request);
+		ProductVariantResponse response = productVariantService.createProductVariant(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
 	
@@ -44,7 +47,7 @@ public class ProductVariantController {
             @PathVariable Long id) {
 
         log.info("Received request to fetch product variant with ID {}", id);
-        ProductVariantResponse response = productVariantService.getVariantById(id);
+        ProductVariantResponse response = productVariantService.getProductVariantById(id);
         return ResponseEntity.ok(response);
     }
 	
@@ -55,7 +58,7 @@ public class ProductVariantController {
             @PathVariable String skuCode) {
 
         log.info("Received request to fetch product variant with SKU {}", skuCode);
-        ProductVariantResponse response = productVariantService.getVariantBySkuCode(skuCode);
+        ProductVariantResponse response = productVariantService.getProductVariantBySkuCode(skuCode);
         return ResponseEntity.ok(response);
     }
 	
@@ -66,7 +69,35 @@ public class ProductVariantController {
             @PathVariable Long productId) {
 
         log.info("Received request to fetch variants for product {}", productId);
-        List<ProductVariantResponse> response = productVariantService.getVariantsByProductId(productId);
+        List<ProductVariantResponse> response = productVariantService.getProductVariantsByProductId(productId);
         return ResponseEntity.ok(response);
     }
+	
+	@PutMapping("/{id}")
+	@Operation(summary = "Update Product Variant")
+	@ApiResponse(responseCode = "200", description = "Product Variant updated successfully")
+	public ResponseEntity<ProductVariantResponse> updateProductVariant(
+	        @PathVariable Long id,
+	        @Valid @RequestBody UpdateProductVariantRequest request) {
+
+	    log.info("Received request to update product variant with ID {}", id);
+
+	    ProductVariantResponse response =
+	            productVariantService.updateProductVariant(id, request);
+
+	    return ResponseEntity.ok(response);
+	}
+	
+	@DeleteMapping("/{id}")
+	@Operation(summary = "Delete Product Variant")
+	@ApiResponse(responseCode = "204", description = "Product Variant deleted successfully")
+	public ResponseEntity<Void> deleteProductVariant(
+	        @PathVariable Long id) {
+
+	    log.info("Received request to delete product variant with ID {}", id);
+
+	    productVariantService.deleteProductVariant(id);
+
+	    return ResponseEntity.noContent().build();
+	}
 }
