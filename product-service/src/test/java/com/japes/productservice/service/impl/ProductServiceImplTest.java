@@ -316,78 +316,90 @@ public class ProductServiceImplTest {
 	}
 	
 	@Test
-	void shouldUpdateProductSuccessfully() {
-		// mock repository
-		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.of(savedProduct));
-		// manually change the object state to represent its updated state
-		savedProduct.setName(updateRequest.getName());
-		savedProduct.setDescription(updateRequest.getDescription());
-		savedProduct.setPrice(updateRequest.getPrice());
-		// stub
-		when(productRepository.save(savedProduct)).thenReturn(savedProduct);
-		when(modelMapper.map(savedProduct, ProductResponse.class)).thenReturn(response);
-		doNothing().when(modelMapper).map(updateRequest, savedProduct);
-		// update response
-		response.setName(updateRequest.getName());
-		response.setDescription(updateRequest.getDescription());
-		response.setPrice(updateRequest.getPrice());
-		// Act
-		ProductResponse result = productService.updateProduct(1L, updateRequest);
-		// Assert
-		assertNotNull(result);
-		assertEquals(updateRequest.getSkuCode(), result.getSkuCode());
-		assertEquals(updateRequest.getName(), result.getName());
-		assertEquals(updateRequest.getDescription(), result.getDescription());
-		assertEquals(updateRequest.getPrice(), result.getPrice());
-		// verify
-		verify(productRepository).findById(savedProduct.getId());
-		verify(modelMapper).map(updateRequest, savedProduct);
-		verify(productRepository).save(savedProduct);
-		verify(modelMapper).map(savedProduct, ProductResponse.class);
+	void updateProduct_ShouldUpdateSuccessfully() {
+	    // Arrange
+	    when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+	    when(categoryRepository.findById(updateRequest.getCategoryId())).thenReturn(Optional.of(category));
+	    when(productRepository.existsByNameAndBrand(updateRequest.getName(),updateRequest.getBrand())).thenReturn(false);
+	    when(productRepository.save(product)).thenReturn(product);
+
+	    // Act
+	    ProductResponse result = productService.updateProduct(product.getId(), updateRequest);
+
+	    // Assert
+	    assertNotNull(result);
+
+	    assertEquals(updateRequest.getName(), result.getName());
+	    assertEquals(updateRequest.getDescription(), result.getDescription());
+	    assertEquals(updateRequest.getBrand(), result.getBrand());
+	    assertEquals(updateRequest.getImageUrl(), result.getImageUrl());
+
+	    assertEquals(category.getId(), result.getCategoryId());
+	    assertEquals(category.getName(), result.getCategoryName());
+
+	    // Verify
+	    verify(productRepository).findById(product.getId());
+	    verify(categoryRepository).findById(updateRequest.getCategoryId());
+	    verify(productRepository).save(product);
 	}
 	
 	@Test
-	void testUpdateProduct_ProductNotFoundException() {
-		when(productRepository.findById(1L))
-        .thenReturn(Optional.empty());
-		ProductNotFoundException exception =
-		        assertThrows(
-		                ProductNotFoundException.class,
-		                () -> productService.updateProduct(1L, updateRequest)
-		        );
-		assertEquals(
-		        "Product with ID 1 not found",
-		        exception.getMessage()
-		);
-		verify(productRepository).findById(1L);
-		verify(productRepository, never()).save(any(Product.class));
-		verifyNoInteractions(modelMapper);
+	void updateProduct_ShouldThrowProductNotFoundException() {
+	    // Arrange
+	    when(productRepository.findById(product.getId())).thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    ProductNotFoundException exception =
+	            assertThrows(ProductNotFoundException.class,
+	                    () -> productService.updateProduct(product.getId(), updateRequest));
+
+	    assertEquals("Product with ID 1 not found", exception.getMessage());
+
+	    // Verify
+	    verify(productRepository).findById(product.getId());
+	    verify(categoryRepository, never()).findById(anyLong());
+	    verify(productRepository, never()).save(any());
 	}
 	
 	@Test
-	void testUpdateProduct_ProductAlreadyExistsException() {
-		// Repository finds existing product
-		when(productRepository.findById(1L))
-        .thenReturn(Optional.of(savedProduct));
-		// make the update request use a different SKU
-		updateRequest.setSkuCode("SKU999");
-		// stub
-		when(productRepository.existsBySkuCode(updateRequest.getSkuCode())).thenReturn(true);
-		// Act + Assert
-		ProductAlreadyExistsException exception =
-		        assertThrows(
-		                ProductAlreadyExistsException.class,
-		                () -> productService.updateProduct(1L, updateRequest)
-		        );
-		assertEquals(
-		        "Another product with SKU SKU999 already exists",
-		        exception.getMessage()
-		);
-		// verify 
-		verify(productRepository).findById(1L); // repo is searched
-		verify(productRepository).existsBySkuCode("SKU999"); // duplicate is executed
-		verify(productRepository, never()).save(any(Product.class)); //save should never happen
-		verifyNoInteractions(modelMapper); // mapper should never be called because exception is thrown before it
+	void updateProduct_ShouldThrowCategoryNotFoundException() {
+	    // Arrange
+	    when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+	    when(categoryRepository.findById(updateRequest.getCategoryId())).thenReturn(Optional.empty());
+	    
+	    // Act & Assert
+	    CategoryNotFoundException exception =
+	            assertThrows(CategoryNotFoundException.class,
+	                    () -> productService.updateProduct(product.getId(), updateRequest));
+
+	    assertEquals("Category with ID 1 not found", exception.getMessage());
+
+	    // Verify
+	    verify(productRepository).findById(product.getId());
+	    verify(categoryRepository).findById(updateRequest.getCategoryId());
+	    verify(productRepository, never()).save(any());
+	}
+	
+	@Test
+	void updateProduct_ShouldThrowProductAlreadyExistsException() {
+	    // Arrange
+	    when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+	    when(categoryRepository.findById(updateRequest.getCategoryId())).thenReturn(Optional.of(category));
+	    when(productRepository.existsByNameAndBrand(updateRequest.getName(),updateRequest.getBrand())).thenReturn(true);
+
+	    // Act & Assert
+	    ProductAlreadyExistsException exception =
+	            assertThrows(ProductAlreadyExistsException.class,
+	                    () -> productService.updateProduct(product.getId(), updateRequest));
+
+	    assertEquals(
+	            "Product 'iPhone 16 Pro' of brand 'Apple' already exists",
+	            exception.getMessage());
+
+	    // Verify
+	    verify(productRepository).findById(product.getId());
+	    verify(categoryRepository).findById(updateRequest.getCategoryId());
+	    verify(productRepository, never()).save(any());
 	}
 
 }
