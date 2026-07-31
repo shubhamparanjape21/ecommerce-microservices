@@ -13,9 +13,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import com.japes.productservice.dto.product.CreateProductRequest;
@@ -214,44 +213,43 @@ public class ProductServiceImplTest {
 	}
 	
 	@Test
-	void shouldReturnPaginatedProductList() {
+	void getProductList_ShouldReturnPagedProductsSuccessfully() {
+	    // Arrange
+	    Page<Product> productPage = new PageImpl<>(
+	            List.of(product),
+	            PageRequest.of(0, 10),
+	            1);
 
-		Product product2 = new Product();
-		product2.setId(2L);
-		product2.setSkuCode("SKU002");
-		product2.setName("Samsung S25");
-		product2.setDescription("Samsung flagship smartphone");
-		product2.setPrice(new BigDecimal("75000"));
-		
-		ProductResponse response2 = new ProductResponse();
-		response2.setId(product2.getId());
-		response2.setSkuCode(product2.getSkuCode());
-		response2.setName(product2.getName());
-		response2.setDescription(product2.getDescription());
-		response2.setPrice(product2.getPrice());
-		
-		List<Product> products = List.of(savedProduct, product2);
-		Page<Product> productPage = new PageImpl<>(products); // it simulates to productRepository.findAll(pageable);
-		
-		when(productRepository.findAll(any(Pageable.class)))
-        .thenReturn(productPage);
-		when(modelMapper.map(savedProduct, ProductResponse.class))
-		.thenReturn(response);
-		when(modelMapper.map(product2, ProductResponse.class))
-		.thenReturn(response2);
-		// Act
-		ProductPageResponse result = productService.getProductList(0, 5, "name", "asc");
-		//Assert
-		assertNotNull(result);
-		assertEquals(2, result.getProducts().size());
-		assertEquals(0, result.getCurrentPage());
-		assertEquals(2, result.getTotalElements());
-		assertTrue(result.isFirst());
-		assertTrue(result.isLast());
-		// verify
-		verify(productRepository).findAll(any(Pageable.class));
-		verify(modelMapper).map(savedProduct, ProductResponse.class);
-		verify(modelMapper).map(product2, ProductResponse.class);
+	    when(productRepository.findAll(any(Pageable.class))).thenReturn(productPage);
+
+	    // Act
+	    ProductPageResponse result = productService.getProductList(0, 10, "name", "asc");
+
+	    // Assert
+	    assertNotNull(result);
+
+	    assertEquals(1, result.getProducts().size());
+
+	    ProductResponse response = result.getProducts().get(0);
+
+	    assertEquals(product.getId(), response.getId());
+	    assertEquals(product.getName(), response.getName());
+	    assertEquals(product.getDescription(), response.getDescription());
+	    assertEquals(product.getBrand(), response.getBrand());
+	    assertEquals(product.getImageUrl(), response.getImageUrl());
+
+	    assertEquals(category.getId(), response.getCategoryId());
+	    assertEquals(category.getName(), response.getCategoryName());
+
+	    assertEquals(0, result.getCurrentPage());
+	    assertEquals(10, result.getPageSize());
+	    assertEquals(1, result.getTotalElements());
+	    assertEquals(1, result.getTotalPages());
+
+	    assertTrue(result.isFirst());
+	    assertTrue(result.isLast());
+	    // Verify
+	    verify(productRepository).findAll(any(Pageable.class));
 	}
 	
 	@Test
