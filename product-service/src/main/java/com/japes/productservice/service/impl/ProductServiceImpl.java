@@ -15,6 +15,7 @@ import com.japes.productservice.dto.product.UpdateProductRequest;
 import com.japes.productservice.entity.Category;
 import com.japes.productservice.entity.Product;
 import com.japes.productservice.exception.category.CategoryNotFoundException;
+import com.japes.productservice.exception.product.ProductAlreadyExistsException;
 import com.japes.productservice.exception.product.ProductNotFoundException;
 import com.japes.productservice.repository.CategoryRepository;
 import com.japes.productservice.repository.ProductRepository;
@@ -40,7 +41,15 @@ public class ProductServiceImpl implements ProductService {
 					log.warn("Category not found with ID {}", request.getCategoryId());
 					return new CategoryNotFoundException("Category with ID " + request.getCategoryId() + " not found");
 				});
-		
+		log.debug("Checking whether product '{}' of brand '{}' already exists",
+		        request.getName(),
+		        request.getBrand());
+
+		if (productRepository.existsByNameAndBrand(request.getName(), request.getBrand())) {
+		    log.warn("Duplicate product '{}' of brand '{}' detected",request.getName(),request.getBrand());
+		    throw new ProductAlreadyExistsException(
+		            "Product '" + request.getName() + "' of brand '" + request.getBrand() + "' already exists");
+		}
 		log.debug("Mapping CreateProductRequest to Product entity");
 		Product product = modelMapper.map(request, Product.class);
 		product.setCategory(category);
@@ -104,6 +113,14 @@ public class ProductServiceImpl implements ProductService {
 					log.warn("Category not found with ID {}", request.getCategoryId());
 					return new CategoryNotFoundException("Category with ID " + request.getCategoryId() + " not found");
 				});
+		if ((!existingProduct.getName().equalsIgnoreCase(request.getName())
+		        || !existingProduct.getBrand().equalsIgnoreCase(request.getBrand()))
+		    && productRepository.existsByNameAndBrand(
+		            request.getName(),
+		            request.getBrand())) {
+
+		    throw new ProductAlreadyExistsException("Product '" + request.getName() + "' of brand '" + request.getBrand() + "' already exists");
+		}
 		log.debug("Updating product details");
 		existingProduct.setName(request.getName());
 		existingProduct.setDescription(request.getDescription());
