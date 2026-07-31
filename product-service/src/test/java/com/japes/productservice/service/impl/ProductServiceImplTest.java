@@ -6,12 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,13 +34,18 @@ import com.japes.productservice.dto.product.CreateProductRequest;
 import com.japes.productservice.dto.product.ProductPageResponse;
 import com.japes.productservice.dto.product.ProductResponse;
 import com.japes.productservice.dto.product.UpdateProductRequest;
+import com.japes.productservice.entity.Category;
 import com.japes.productservice.entity.Product;
+import com.japes.productservice.exception.category.CategoryNotFoundException;
 import com.japes.productservice.exception.product.ProductAlreadyExistsException;
 import com.japes.productservice.exception.product.ProductNotFoundException;
+import com.japes.productservice.repository.CategoryRepository;
 import com.japes.productservice.repository.ProductRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class ProductServiceImplTest {
+	@Mock
+	private CategoryRepository categoryRepository;
 	@Mock
 	private ProductRepository productRepository;
 	@Mock
@@ -46,9 +53,9 @@ public class ProductServiceImplTest {
 	@InjectMocks
 	private ProductServiceImpl productService;
 	
-	private CreateProductRequest request;
+	private CreateProductRequest createRequest;
+	private Category category;
 	private Product product;
-	private Product savedProduct;
 	private ProductResponse response;
 	private UpdateProductRequest updateRequest;
 
@@ -56,75 +63,154 @@ public class ProductServiceImplTest {
 	void setUp() {
 		// Arrange
 		// Create all required objects & fill those objects
-		request = new CreateProductRequest();
-		request.setSkuCode("SKU001");
-		request.setName("iPhone 16");
-		request.setDescription("Latest Apple smartphone");
-		request.setPrice(new BigDecimal("89999"));
-		
-		updateRequest = new UpdateProductRequest();
-		updateRequest.setSkuCode("SKU001");
-		updateRequest.setName("iPhone 16 Pro");
-		updateRequest.setDescription("Latest Apple flagship smartphone");
-		updateRequest.setPrice(new BigDecimal("99999"));
+		category = new Category();
+	    category.setId(1L);
+	    category.setName("Mobiles");
+	    category.setDescription("Smartphones and Accessories");
 
-		product = new Product();
-		product.setSkuCode(request.getSkuCode());
-		product.setName(request.getName());
-		product.setDescription(request.getDescription());
-		product.setPrice(request.getPrice());
+	    createRequest = new CreateProductRequest();
+	    createRequest.setName("iPhone 16");
+	    createRequest.setDescription("Apple flagship phone");
+	    createRequest.setBrand("Apple");
+	    createRequest.setImageUrl("iphone16.jpg");
+	    createRequest.setCategoryId(1L);
 
-		savedProduct = new Product();
-		savedProduct.setId(1L);
-		savedProduct.setSkuCode(request.getSkuCode());
-		savedProduct.setName(request.getName());
-		savedProduct.setDescription(request.getDescription());
-		savedProduct.setPrice(request.getPrice());
+	    updateRequest = new UpdateProductRequest();
+	    updateRequest.setName("iPhone 16 Pro");
+	    updateRequest.setDescription("Updated Description");
+	    updateRequest.setBrand("Apple");
+	    updateRequest.setImageUrl("iphone16pro.jpg");
+	    updateRequest.setCategoryId(1L);
+	    updateRequest.setActive(true);
 
-		response = new ProductResponse();
-		response.setId(1L);
-		response.setSkuCode(request.getSkuCode());
-		response.setName(request.getName());
-		response.setDescription(request.getDescription());
-		response.setPrice(request.getPrice());
+	    product = new Product();
+	    product.setId(1L);
+	    product.setName("iPhone 16");
+	    product.setDescription("Apple flagship phone");
+	    product.setBrand("Apple");
+	    product.setImageUrl("iphone16.jpg");
+	    product.setCategory(category);
+	    product.setActive(true);
+
+	    response = new ProductResponse();
+	    response.setId(1L);
+	    response.setName("iPhone 16");
+	    response.setDescription("Apple flagship phone");
+	    response.setBrand("Apple");
+	    response.setImageUrl("iphone16.jpg");
+	    response.setCategoryId(1L);
+	    response.setCategoryName("Mobiles");
+	    response.setActive(true);
 	}
 
 	@Test
-	void shouldSaveProductSuccessfully() {
-		// Mock behaviour
-		when(productRepository.existsBySkuCode(request.getSkuCode())).thenReturn(false);
-		when(modelMapper.map(request, Product.class)).thenReturn(product);
-		when(productRepository.save(product)).thenReturn(savedProduct);
-		when(modelMapper.map(savedProduct, ProductResponse.class)).thenReturn(response);
+	void saveProduct_ShouldCreateProductSuccessfully() {
+	    // Arrange
+	    when(categoryRepository.findById(createRequest.getCategoryId()))
+	            .thenReturn(Optional.of(category));
 
-		// Act
-		// Call method
-		ProductResponse result = productService.saveProduct(request);
+	    when(productRepository.existsByNameAndBrand(
+	            createRequest.getName(),
+	            createRequest.getBrand()))
+	            .thenReturn(false);
 
-		// Assert
-		assertNotNull(result);
-		assertEquals("SKU001", result.getSkuCode());
-		assertEquals(1L, result.getId());
-		assertEquals("iPhone 16", result.getName());
-		assertEquals(new BigDecimal("89999"), result.getPrice());
+	    when(modelMapper.map(createRequest, Product.class))
+	            .thenReturn(product);
 
-		// verify
-		verify(productRepository).existsBySkuCode(request.getSkuCode());
-		verify(productRepository).save(product);
-		verify(modelMapper).map(request, Product.class);
-		verify(modelMapper).map(savedProduct, ProductResponse.class);
+	    when(productRepository.save(product))
+	            .thenReturn(product);
+
+	    // Act
+	    ProductResponse result = productService.saveProduct(createRequest);
+
+	    // Assert
+	    assertNotNull(result);
+
+	    assertEquals(product.getId(), result.getId());
+	    assertEquals(product.getName(), result.getName());
+	    assertEquals(product.getDescription(), result.getDescription());
+	    assertEquals(product.getBrand(), result.getBrand());
+	    assertEquals(product.getImageUrl(), result.getImageUrl());
+
+	    assertEquals(category.getId(), result.getCategoryId());
+	    assertEquals(category.getName(), result.getCategoryName());
+
+	    // Verify
+	    verify(categoryRepository).findById(createRequest.getCategoryId());
+
+	    verify(productRepository)
+	            .existsByNameAndBrand(
+	                    createRequest.getName(),
+	                    createRequest.getBrand());
+
+	    verify(modelMapper).map(createRequest, Product.class);
+
+	    verify(productRepository).save(product);
 	}
 	
 	@Test
-	void testSaveProduct_ProductAlreadyExistsException() {
-		// mock the repo
-		when(productRepository.existsBySkuCode(request.getSkuCode())).thenReturn(true);
-		// Act + Assert
-		ProductAlreadyExistsException exception = assertThrows(ProductAlreadyExistsException.class, () -> productService.saveProduct(request));
-		verify(productRepository, never()).save(any(Product.class));
-		verify(modelMapper, never()).map(any(), eq(Product.class));
-		verify(modelMapper, never()).map(any(), eq(ProductResponse.class));
-		assertEquals("Product with SKU SKU001 already exists", exception.getMessage());
+	void saveProduct_ShouldThrowCategoryNotFoundException() {
+	    // Arrange
+	    when(categoryRepository.findById(createRequest.getCategoryId()))
+	            .thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    CategoryNotFoundException exception =
+	            assertThrows(CategoryNotFoundException.class,
+	                    () -> productService.saveProduct(createRequest));
+
+	    assertEquals(
+	            "Category with ID 1 not found",
+	            exception.getMessage());
+
+	    // Verify
+	    verify(categoryRepository)
+	            .findById(createRequest.getCategoryId());
+
+	    verify(productRepository, never())
+	            .existsByNameAndBrand(anyString(), anyString());
+
+	    verify(productRepository, never())
+	            .save(any());
+
+	    verify(modelMapper, never())
+	            .map(any(), eq(Product.class));
+	}
+	
+	@Test
+	void saveProduct_ShouldThrowProductAlreadyExistsException() {
+	    // Arrange
+	    when(categoryRepository.findById(createRequest.getCategoryId()))
+	            .thenReturn(Optional.of(category));
+
+	    when(productRepository.existsByNameAndBrand(
+	            createRequest.getName(),
+	            createRequest.getBrand()))
+	            .thenReturn(true);
+
+	    // Act & Assert
+	    ProductAlreadyExistsException exception =
+	            assertThrows(ProductAlreadyExistsException.class,
+	                    () -> productService.saveProduct(createRequest));
+
+	    assertEquals(
+	            "Product 'iPhone 16' of brand 'Apple' already exists",
+	            exception.getMessage());
+
+	    // Verify
+	    verify(categoryRepository)
+	            .findById(createRequest.getCategoryId());
+
+	    verify(productRepository)
+	            .existsByNameAndBrand(
+	                    createRequest.getName(),
+	                    createRequest.getBrand());
+
+	    verify(productRepository, never())
+	            .save(any());
+
+	    verify(modelMapper, never())
+	            .map(any(), eq(Product.class));
 	}
 	
 	@Test
