@@ -291,26 +291,26 @@ public class ProductServiceImplTest {
 	}
 	
 	@Test
-	void shouldDeleteProductSuccessfully() {
+	void deleteProduct_ShouldDeleteSuccessfully() {
 		// mocking behaviour
-		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.of(savedProduct));
+		when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
 		// Act
-		productService.deleteProduct(savedProduct.getId());
+		productService.deleteProduct(product.getId());
 		// Assert - nothing to assert because no return value
 		// verify interactions
-		verify(productRepository).findById(savedProduct.getId());
-		verify(productRepository).deleteById(savedProduct.getId());
+		verify(productRepository).findById(product.getId());
+		verify(productRepository).delete(product);
 	}
 	
 	@Test
-	void testDeleteProduct_ProductNotFoundException() {
+	void deleteProduct_ShouldThrowProductNotFoundException() {
 		// mock the repo
-		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.empty());
+		when(productRepository.findById(product.getId())).thenReturn(Optional.empty());
 		// Act + Assert
-		ProductNotFoundException exception = assertThrows(ProductNotFoundException.class, () -> productService.deleteProduct(savedProduct.getId()));
+		ProductNotFoundException exception = assertThrows(ProductNotFoundException.class, () -> productService.deleteProduct(product.getId()));
 		assertEquals("Product with ID 1 not found", exception.getMessage());
 		// verify repository searched
-		verify(productRepository).findById(savedProduct.getId());
+		verify(productRepository).findById(product.getId());
 		// verify delete should never happen
 		verify(productRepository, never()).deleteById(anyLong());
 	}
