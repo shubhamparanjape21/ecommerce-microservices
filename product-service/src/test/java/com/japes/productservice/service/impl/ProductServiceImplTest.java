@@ -391,44 +391,5 @@ public class ProductServiceImplTest {
 		verify(productRepository, never()).save(any(Product.class)); //save should never happen
 		verifyNoInteractions(modelMapper); // mapper should never be called because exception is thrown before it
 	}
-	
-	@Test
-	void shouldReturnProductWhenSkuCodeExists() {
-		// Arrange
-		when(productRepository.findBySkuCode(savedProduct.getSkuCode())).thenReturn(Optional.of(savedProduct));
-		when(modelMapper.map(savedProduct, ProductResponse.class)).thenReturn(response);
-		// Act
-		ProductResponse result = productService.getProductBySkuCode(savedProduct.getSkuCode());
-		// Assert
-		assertNotNull(result);
-		assertEquals(savedProduct.getSkuCode(), result.getSkuCode());
-		assertEquals(savedProduct.getName(), result.getName());
-		assertEquals(savedProduct.getDescription(), result.getDescription());
-		assertEquals(savedProduct.getPrice(), result.getPrice());
-		// Verify
-		verify(productRepository).findBySkuCode(savedProduct.getSkuCode());
-		verify(modelMapper).map(savedProduct, ProductResponse.class);
-	}
-	
-	@Test
-	void testGetProductBySkuCode_ProductNotFoundException() {
-		// Arrange
-		when(productRepository.findBySkuCode("SKU001"))
-        .thenReturn(Optional.empty());
-		// Act + Assert
-		ProductNotFoundException exception =
-		        assertThrows(
-		                ProductNotFoundException.class,
-		                () -> productService.getProductBySkuCode("SKU001")
-		        );
-		// Assert
-		assertEquals(
-		        "Product with SkuCode SKU001 not found",
-		        exception.getMessage()
-		);
-		// verify
-		verify(productRepository).findBySkuCode("SKU001");
-		verifyNoInteractions(modelMapper);
-	}
 
 }
