@@ -255,30 +255,41 @@ public class ProductServiceImplTest {
 	}
 	
 	@Test
-	void shouldReturnProductWhenIdExists() {
-		// mocking behaviour
-		when(productRepository.findById(savedProduct.getId())).thenReturn(Optional.of(savedProduct));
-		when(modelMapper.map(savedProduct, ProductResponse.class)).thenReturn(response);
-		// Act
-		ProductResponse result = productService.getProductById(1L);
-		// Assert
-		assertNotNull(result);
-		assertEquals("SKU001", result.getSkuCode());
-		assertEquals("iPhone 16", result.getName());
-		// verify
-		verify(productRepository).findById(1L);
-		verify(modelMapper).map(savedProduct, ProductResponse.class);
+	void getProductById_ShouldReturnProductSuccessfully() {
+	    // Arrange
+	    when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+
+	    // Act
+	    ProductResponse result = productService.getProductById(product.getId());
+
+	    // Assert
+	    assertNotNull(result);
+
+	    assertEquals(product.getId(), result.getId());
+	    assertEquals(product.getName(), result.getName());
+	    assertEquals(product.getDescription(), result.getDescription());
+	    assertEquals(product.getBrand(), result.getBrand());
+	    assertEquals(product.getImageUrl(), result.getImageUrl());
+
+	    assertEquals(category.getId(), result.getCategoryId());
+	    assertEquals(category.getName(), result.getCategoryName());
+	    // Verify
+	    verify(productRepository).findById(product.getId());
 	}
 	
 	@Test
-	void testGetProductById_ProductNotFoundException() {
-		// mock the repo
-		when(productRepository.findById(1L)).thenReturn(Optional.empty());
-		// Act + Assert
-		ProductNotFoundException exception = assertThrows(ProductNotFoundException.class, () -> productService.getProductById(1L));
-		assertEquals("Product with ID 1 not found", exception.getMessage());
-		verify(productRepository).findById(1L);
-		verifyNoInteractions(modelMapper);
+	void getProductById_ShouldThrowProductNotFoundException() {
+	    // Arrange
+	    when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    ProductNotFoundException exception =
+	            assertThrows(ProductNotFoundException.class,
+	                    () -> productService.getProductById(1L));
+
+	    assertEquals("Product with ID 1 not found", exception.getMessage());
+	    // Verify
+	    verify(productRepository).findById(1L);
 	}
 	
 	@Test
