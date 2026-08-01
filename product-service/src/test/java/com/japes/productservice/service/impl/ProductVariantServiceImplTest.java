@@ -225,4 +225,50 @@ public class ProductVariantServiceImplTest {
 	    // Verify
 	    verify(productVariantRepository).findById(productVariant.getId());
 	}
+	
+	@Test
+	void getProductVariantBySkuCode_ShouldReturnVariantSuccessfully() {
+	    // Arrange
+	    when(productVariantRepository.findBySkuCode(productVariant.getSkuCode())).thenReturn(Optional.of(productVariant));
+
+	    // Act
+	    ProductVariantResponse result = productVariantServiceImpl.getProductVariantBySkuCode(productVariant.getSkuCode());
+
+	    // Assert
+	    assertNotNull(result);
+
+	    assertEquals(productVariant.getId(), result.getId());
+	    assertEquals(product.getId(), result.getProductId());
+	    assertEquals(product.getName(), result.getProductName());
+
+	    assertEquals(productVariant.getSkuCode(), result.getSkuCode());
+	    assertEquals(productVariant.getPrice(), result.getPrice());
+	    assertEquals(productVariant.getActive(), result.getActive());
+
+	    assertEquals(1, result.getAttributes().size());
+
+	    VariantAttributeResponse attribute = result.getAttributes().get(0);
+
+	    assertEquals(variantAttribute.getAttributeName(), attribute.getAttributeName());
+	    assertEquals(variantAttribute.getAttributeValue(), attribute.getAttributeValue());
+
+	    // Verify
+	    verify(productVariantRepository).findBySkuCode(productVariant.getSkuCode());
+	}
+	
+	@Test
+	void getProductVariantBySkuCode_ShouldThrowProductVariantNotFoundException() {
+	    // Arrange
+	    when(productVariantRepository.findBySkuCode(productVariant.getSkuCode())).thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    ProductVariantNotFoundException exception =
+	            assertThrows(ProductVariantNotFoundException.class,
+	                    () -> productVariantServiceImpl.getProductVariantBySkuCode(productVariant.getSkuCode()));
+
+	    assertEquals("Product Variant with SKU "+ productVariant.getSkuCode() +" not found",  exception.getMessage());
+
+	    // Verify
+	    verify(productVariantRepository).findBySkuCode(productVariant.getSkuCode());
+	}
 }
