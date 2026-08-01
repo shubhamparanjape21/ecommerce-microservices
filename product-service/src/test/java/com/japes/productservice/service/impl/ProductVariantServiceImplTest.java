@@ -132,8 +132,8 @@ public class ProductVariantServiceImplTest {
 
 	    VariantAttributeResponse attribute = result.getAttributes().get(0);
 
-	    assertEquals("Storage", attribute.getAttributeName());
-	    assertEquals("128 GB", attribute.getAttributeValue());
+	    assertEquals(variantAttribute.getAttributeName(), attribute.getAttributeName());
+	    assertEquals(variantAttribute.getAttributeValue(), attribute.getAttributeValue());
 
 	    // Verify
 	    verify(productRepository).findById(createRequest.getProductId());
@@ -151,7 +151,7 @@ public class ProductVariantServiceImplTest {
 	            assertThrows(ProductNotFoundException.class,
 	                    () -> productVariantServiceImpl.createProductVariant(createRequest));
 
-	    assertEquals("Product with ID 1 not found", exception.getMessage());
+	    assertEquals("Product with ID " + createRequest.getProductId() +" not found", exception.getMessage());
 
 	    // Verify
 	    verify(productRepository).findById(createRequest.getProductId());
@@ -171,7 +171,7 @@ public class ProductVariantServiceImplTest {
 	            assertThrows(ProductVariantAlreadyExistsException.class,
 	                    () -> productVariantServiceImpl.createProductVariant(createRequest));
 
-	    assertEquals("Product variant with SKU IPH16-128-BLK already exists", exception.getMessage());
+	    assertEquals("Product variant with SKU "+ createRequest.getSkuCode() +" already exists", exception.getMessage());
 
 	    // Verify
 	    verify(productRepository).findById(createRequest.getProductId());
