@@ -31,6 +31,7 @@ import com.japes.productservice.entity.ProductVariant;
 import com.japes.productservice.entity.VariantAttribute;
 import com.japes.productservice.exception.product.ProductNotFoundException;
 import com.japes.productservice.exception.productvariant.ProductVariantAlreadyExistsException;
+import com.japes.productservice.exception.productvariant.ProductVariantNotFoundException;
 import com.japes.productservice.repository.ProductRepository;
 import com.japes.productservice.repository.ProductVariantRepository;
 
@@ -177,5 +178,51 @@ public class ProductVariantServiceImplTest {
 	    verify(productRepository).findById(createRequest.getProductId());
 	    verify(productVariantRepository).existsBySkuCode(createRequest.getSkuCode());
 	    verify(productVariantRepository, never()).save(any());
+	}
+	
+	@Test
+	void getProductVariantById_ShouldReturnVariantSuccessfully() {
+	    // Arrange
+	    when(productVariantRepository.findById(productVariant.getId())).thenReturn(Optional.of(productVariant));
+
+	    // Act
+	    ProductVariantResponse result = productVariantServiceImpl.getProductVariantById(productVariant.getId());
+
+	    // Assert
+	    assertNotNull(result);
+
+	    assertEquals(productVariant.getId(), result.getId());
+	    assertEquals(product.getId(), result.getProductId());
+	    assertEquals(product.getName(), result.getProductName());
+
+	    assertEquals(productVariant.getSkuCode(), result.getSkuCode());
+	    assertEquals(productVariant.getPrice(), result.getPrice());
+	    assertEquals(productVariant.getActive(), result.getActive());
+
+	    assertEquals(1, result.getAttributes().size());
+
+	    VariantAttributeResponse attribute = result.getAttributes().get(0);
+
+	    assertEquals(variantAttribute.getAttributeName(), attribute.getAttributeName());
+	    assertEquals(variantAttribute.getAttributeValue(), attribute.getAttributeValue());
+
+	    // Verify
+	    verify(productVariantRepository).findById(productVariant.getId());
+	}
+	
+	@Test
+	void getProductVariantById_ShouldThrowProductVariantNotFoundException() {
+	    // Arrange
+	    when(productVariantRepository.findById(productVariant.getId())).thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    ProductVariantNotFoundException exception =
+	            assertThrows(ProductVariantNotFoundException.class,
+	                    () -> productVariantServiceImpl.getProductVariantById(productVariant.getId()));
+
+	    assertEquals("Product Variant with ID "+ productVariant.getId() +" not found", exception.getMessage());
+
+	    // Verify
+	    verify(productVariantRepository).findById(productVariant.getId());
 	}
 }
