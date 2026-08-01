@@ -380,4 +380,34 @@ public class ProductVariantServiceImplTest {
 	    verify(modelMapper, never()).map(any(), any());
 	    verify(productVariantRepository, never()).save(any());
 	}
+	
+	@Test
+	void deleteProductVariant_ShouldDeleteSuccessfully() {
+	    // Arrange
+	    when(productVariantRepository.findById(productVariant.getId())).thenReturn(Optional.of(productVariant));
+
+	    // Act
+	    productVariantServiceImpl.deleteProductVariant(productVariant.getId());
+
+	    // Verify
+	    verify(productVariantRepository).findById(productVariant.getId());
+	    verify(productVariantRepository).delete(productVariant);
+	}
+	
+	@Test
+	void deleteProductVariant_ShouldThrowProductVariantNotFoundException() {
+	    // Arrange
+	    when(productVariantRepository.findById(productVariant.getId())).thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    ProductVariantNotFoundException exception =
+	            assertThrows(ProductVariantNotFoundException.class,
+	                    () -> productVariantServiceImpl.deleteProductVariant(productVariant.getId()));
+
+	    assertEquals("Product variant with ID "+ productVariant.getId() +" not found", exception.getMessage());
+
+	    // Verify
+	    verify(productVariantRepository).findById(productVariant.getId());
+	    verify(productVariantRepository, never()).delete(any());
+	}
 }
