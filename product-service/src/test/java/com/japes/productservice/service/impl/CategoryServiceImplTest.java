@@ -43,12 +43,12 @@ public class CategoryServiceImplTest {
 	private ModelMapper modelMapper;
 	@InjectMocks
 	private CategoryServiceImpl categoryServiceImpl;
-	
+
 	private Category category;
     private CreateCategoryRequest createRequest;
     private UpdateCategoryRequest updateRequest;
     private CategoryResponse categoryResponse;
-    
+
 	@BeforeEach
 	void setUp() {
 		// Arrange
@@ -70,7 +70,7 @@ public class CategoryServiceImplTest {
 	    categoryResponse.setName("Electronics");
 	    categoryResponse.setDescription("Electronic gadgets");
 	}
-	
+
 	@Test
 	void shouldSaveCategorySuccessfully() {
 		// Mock
@@ -84,7 +84,7 @@ public class CategoryServiceImplTest {
 		assertEquals(1L, response.getId());
 		assertEquals("Electronics", response.getName());
 		assertEquals("Electronic gadgets", response.getDescription());
-		
+
 		ArgumentCaptor<Category> categoryCaptor =
 	            ArgumentCaptor.forClass(Category.class);
 
@@ -100,7 +100,7 @@ public class CategoryServiceImplTest {
 		verify(categoryRepository).save(any(Category.class));
 		verifyNoMoreInteractions(categoryRepository, modelMapper);
 	}
-	
+
 	@Test
 	void shouldThrowCategoryAlreadyExistsException() {
 	    // Arrange
@@ -121,7 +121,7 @@ public class CategoryServiceImplTest {
 	    verify(modelMapper, never()).map(any(), eq(Category.class));
 	    verifyNoMoreInteractions(categoryRepository, modelMapper);
 	}
-	
+
 	@Test
 	void shouldReturnCategoryById() {
 	    // Arrange
@@ -138,7 +138,7 @@ public class CategoryServiceImplTest {
 	    verify(categoryRepository).findById(category.getId());
 	    verifyNoMoreInteractions(categoryRepository);
 	}
-	
+
 	@Test
 	void shouldThrowCategoryNotFoundException() {
 	    // Arrange
@@ -160,7 +160,7 @@ public class CategoryServiceImplTest {
 	    verify(categoryRepository).findById(categoryId);
 	    verifyNoMoreInteractions(categoryRepository);
 	}
-	
+
 	@Test
 	void shouldReturnAllCategories() {
 	    // Arrange
@@ -191,7 +191,7 @@ public class CategoryServiceImplTest {
 	    verify(categoryRepository).findAll();
 	    verifyNoMoreInteractions(categoryRepository);
 	}
-	
+
 	@Test
 	void shouldUpdateCategorySuccessfully() {
 	    // Arrange
@@ -224,14 +224,14 @@ public class CategoryServiceImplTest {
 
 	    assertEquals(updateRequest.getName(), capturedCategory.getName());
 	    assertEquals(updateRequest.getDescription(), capturedCategory.getDescription());
-	    
+
 	    // Verify
 	    verify(categoryRepository).findById(category.getId());
 	    verify(categoryRepository).existsByName(updateRequest.getName());
 	    verify(categoryRepository).save(any(Category.class));
 	    verifyNoMoreInteractions(categoryRepository);
 	}
-	
+
 	@Test
 	void shouldThrowCategoryNotFoundExceptionWhenUpdating() {
 	    // Arrange
@@ -257,7 +257,7 @@ public class CategoryServiceImplTest {
 	    verify(categoryRepository, never()).save(any(Category.class));
 	    verifyNoMoreInteractions(categoryRepository);
 	}
-	
+
 	@Test
 	void shouldThrowCategoryAlreadyExistsExceptionWhenUpdating() {
 	    // Arrange
@@ -284,7 +284,7 @@ public class CategoryServiceImplTest {
 	    verify(categoryRepository, never()).save(any(Category.class));
 	    verifyNoMoreInteractions(categoryRepository);
 	}
-	
+
 	@Test
 	void shouldDeleteCategorySuccessfully() {
 	    // Arrange
@@ -303,7 +303,7 @@ public class CategoryServiceImplTest {
 	    verify(categoryRepository).delete(category);
 	    verifyNoMoreInteractions(categoryRepository, productRepository);
 	}
-	
+
 	@Test
 	void shouldThrowCategoryInUseException() {
 	    // Arrange

@@ -8,10 +8,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -51,7 +49,7 @@ public class ProductServiceImplTest {
 	private ModelMapper modelMapper;
 	@InjectMocks
 	private ProductServiceImpl productService;
-	
+
 	private CreateProductRequest createRequest;
 	private Category category;
 	private Product product;
@@ -146,7 +144,7 @@ public class ProductServiceImplTest {
 
 	    verify(productRepository).save(product);
 	}
-	
+
 	@Test
 	void saveProduct_ShouldThrowCategoryNotFoundException() {
 	    // Arrange
@@ -175,7 +173,7 @@ public class ProductServiceImplTest {
 	    verify(modelMapper, never())
 	            .map(any(), eq(Product.class));
 	}
-	
+
 	@Test
 	void saveProduct_ShouldThrowProductAlreadyExistsException() {
 	    // Arrange
@@ -211,7 +209,7 @@ public class ProductServiceImplTest {
 	    verify(modelMapper, never())
 	            .map(any(), eq(Product.class));
 	}
-	
+
 	@Test
 	void getProductList_ShouldReturnPagedProductsSuccessfully() {
 	    // Arrange
@@ -251,7 +249,7 @@ public class ProductServiceImplTest {
 	    // Verify
 	    verify(productRepository).findAll(any(Pageable.class));
 	}
-	
+
 	@Test
 	void getProductById_ShouldReturnProductSuccessfully() {
 	    // Arrange
@@ -274,7 +272,7 @@ public class ProductServiceImplTest {
 	    // Verify
 	    verify(productRepository).findById(product.getId());
 	}
-	
+
 	@Test
 	void getProductById_ShouldThrowProductNotFoundException() {
 	    // Arrange
@@ -289,7 +287,7 @@ public class ProductServiceImplTest {
 	    // Verify
 	    verify(productRepository).findById(1L);
 	}
-	
+
 	@Test
 	void deleteProduct_ShouldDeleteSuccessfully() {
 		// mocking behaviour
@@ -301,7 +299,7 @@ public class ProductServiceImplTest {
 		verify(productRepository).findById(product.getId());
 		verify(productRepository).delete(product);
 	}
-	
+
 	@Test
 	void deleteProduct_ShouldThrowProductNotFoundException() {
 		// mock the repo
@@ -314,7 +312,7 @@ public class ProductServiceImplTest {
 		// verify delete should never happen
 		verify(productRepository, never()).deleteById(anyLong());
 	}
-	
+
 	@Test
 	void updateProduct_ShouldUpdateSuccessfully() {
 	    // Arrange
@@ -342,7 +340,7 @@ public class ProductServiceImplTest {
 	    verify(categoryRepository).findById(updateRequest.getCategoryId());
 	    verify(productRepository).save(product);
 	}
-	
+
 	@Test
 	void updateProduct_ShouldThrowProductNotFoundException() {
 	    // Arrange
@@ -360,13 +358,13 @@ public class ProductServiceImplTest {
 	    verify(categoryRepository, never()).findById(anyLong());
 	    verify(productRepository, never()).save(any());
 	}
-	
+
 	@Test
 	void updateProduct_ShouldThrowCategoryNotFoundException() {
 	    // Arrange
 	    when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
 	    when(categoryRepository.findById(updateRequest.getCategoryId())).thenReturn(Optional.empty());
-	    
+
 	    // Act & Assert
 	    CategoryNotFoundException exception =
 	            assertThrows(CategoryNotFoundException.class,
@@ -379,7 +377,7 @@ public class ProductServiceImplTest {
 	    verify(categoryRepository).findById(updateRequest.getCategoryId());
 	    verify(productRepository, never()).save(any());
 	}
-	
+
 	@Test
 	void updateProduct_ShouldThrowProductAlreadyExistsException() {
 	    // Arrange

@@ -20,7 +20,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "product_variants")
 public class ProductVariant extends BaseModel{
-	
+
 	@Column(nullable = false, unique = true, length = 100)
     private String skuCode;
 
@@ -33,7 +33,7 @@ public class ProductVariant extends BaseModel{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
-    
+
     @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VariantAttribute> attributes = new ArrayList<>();
 }

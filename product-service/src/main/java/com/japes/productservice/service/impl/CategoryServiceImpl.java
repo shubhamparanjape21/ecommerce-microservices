@@ -52,14 +52,14 @@ public class CategoryServiceImpl implements CategoryService {
 
         return mapToCategoryResponse(savedCategory);
 	}
-	
+
 	public CategoryResponse mapToCategoryResponse(Category category) {
 		CategoryResponse response = new CategoryResponse();
-		
+
 		response.setId(category.getId());
 		response.setName(category.getName());
 		response.setDescription(category.getDescription());
-		
+
 		return response;
 	}
 
@@ -95,31 +95,31 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	public CategoryResponse updateCategory(Long id, UpdateCategoryRequest request) {
 		log.info("Updating category with ID {}", id);
-		
+
         log.debug("Checking whether category with ID {} exists", id);
-        
+
         Category category = categoryRepository.findById(id)
         		.orElseThrow(() -> {
         			log.warn("Category not found with ID {}", id);
         			return new CategoryNotFoundException("Category with ID " + id + " not found");
         		});
-        
+
         if(!category.getName().equalsIgnoreCase(request.getName()) && categoryRepository.existsByName(request.getName())) {
         	log.warn("Another category with name {} already exists", request.getName());
         	throw new CategoryAlreadyExistsException("Category with name " + request.getName() + " already exists");
         }
         log.debug("Updating category fields");
-        
+
         category.setName(request.getName());
-        
+
         category.setDescription(request.getDescription());
-        
+
         log.debug("Saving updated category");
-        
+
         Category updatedCategory = categoryRepository.save(category);
-        
+
         log.info("Successfully updated category with ID {}", id);
-        
+
         return mapToCategoryResponse(updatedCategory);
 	}
 

@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Category Controller", description = "APIs for managing product categories")
 public class CategoryController {
 	private final CategoryService categoryService;
-	
+
 	@PostMapping
     @Operation(summary = "Create Category", description = "Creates a new product category")
     public ResponseEntity<CategoryResponse> createCategory(
@@ -43,7 +43,7 @@ public class CategoryController {
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-	
+
 	@GetMapping("/{id}")
 	@Operation(summary = "Get Category By ID", description = "Fetch category details using category ID")
 	public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable Long id){
@@ -51,7 +51,7 @@ public class CategoryController {
 		CategoryResponse response = categoryService.getCategoryById(id);
 		return ResponseEntity.ok(response);
 	}
-	
+
 	@GetMapping
     @Operation(summary = "Get All Categories", description = "Fetch all available product categories")
     public ResponseEntity<List<CategoryResponse>> getAllCategories() {
@@ -59,7 +59,7 @@ public class CategoryController {
         List<CategoryResponse> response = categoryService.getAllCategories();
         return ResponseEntity.ok(response);
     }
-	
+
 	@PutMapping("/{id}")
 	@Operation(summary = "Update Category", description = "Updates an existing category")
     public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id, @RequestBody @Valid UpdateCategoryRequest request) {
@@ -67,7 +67,7 @@ public class CategoryController {
         CategoryResponse response = categoryService.updateCategory(id, request);
         return ResponseEntity.ok(response);
     }
-	
+
 	@DeleteMapping("/{id}")
     @Operation(summary = "Delete Category", description = "Deletes a category")
     public ResponseEntity<Void> deleteCategory(

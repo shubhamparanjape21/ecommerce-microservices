@@ -25,16 +25,16 @@ public class BaseModel implements Serializable{
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	
+
 	@CreatedDate
 	private LocalDateTime createdAt;
-	
+
 	@LastModifiedDate
 	private LocalDateTime updatedAt;
-	
+
 	@CreatedBy
 	private String createdBy;
-	
+
 	@LastModifiedBy
 	private String updatedBy;
 }

@@ -18,6 +18,7 @@ import com.japes.productservice.exception.productvariant.ProductVariantNotFoundE
 import com.japes.productservice.repository.ProductRepository;
 import com.japes.productservice.repository.ProductVariantRepository;
 import com.japes.productservice.service.ProductVariantService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class ProductVariantServiceImpl implements ProductVariantService {
-	
+
 	private final ProductVariantRepository productVariantRepository;
 	private final ProductRepository productRepository;
 	private final ModelMapper modelMapper;
@@ -35,7 +36,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 		log.info("Creating product variant with SKU {}", request.getSkuCode());
 
 		log.debug("Checking whether product with ID {} exists", request.getProductId());
-		
+
 		Product product = productRepository.findById(request.getProductId())
 				.orElseThrow(() -> {
 					log.warn("Product not found with ID {}",
@@ -43,7 +44,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 					return new ProductNotFoundException("Product with ID " + request.getProductId() + " not found");
 				});
 		log.debug("Checking whether SKU {} already exists", request.getSkuCode());
-		
+
 		if(productVariantRepository.existsBySkuCode(request.getSkuCode())) {
 			log.warn("Duplicate SKU {} detected", request.getSkuCode());
 			throw new ProductVariantAlreadyExistsException("Product variant with SKU " + request.getSkuCode() + " already exists");
@@ -54,7 +55,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 		variant.setSkuCode(request.getSkuCode());
 		variant.setPrice(request.getPrice());
 		variant.setActive(true);
-		
+
 		// Map attributes
 		List<VariantAttribute> attributes = request.getAttributes()
 				.stream()
@@ -66,14 +67,14 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 					return attribute;
 				})
 				.toList();
-		
+
 		// Attach attributes
 		variant.setAttributes(attributes);
-		
+
 		// save
 		log.debug("Saving product variant");
 		ProductVariant savedVariant = productVariantRepository.save(variant);
-		
+
 		log.info("Successfully created product variant with SKU {} for product ID {}", savedVariant.getSkuCode(), savedVariant.getProduct().getId());
 		return mapToProductVariantResponse(savedVariant);
 	}
@@ -118,12 +119,12 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 	            .map(this::mapToProductVariantResponse)
 	            .toList();
 	}
-	
+
 	@Override
 	public ProductVariantResponse updateProductVariant(Long id, UpdateProductVariantRequest request) {
 		log.info("Updating product variant with ID {}", id);
 	    log.debug("Checking whether product variant with ID {} exists", id);
-	    
+
 	    ProductVariant existingVariant = productVariantRepository.findById(id)
 	            .orElseThrow(() -> {
 	                log.warn("Product variant not found with ID {}", id);
@@ -148,7 +149,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
 	    return mapToProductVariantResponse(updatedVariant);
 	}
-	
+
 	@Override
 	public void deleteProductVariant(Long id) {
 		log.info("Deleting product variant with ID {}", id);
@@ -166,12 +167,12 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
 	    productVariantRepository.delete(existingVariant);
 
-	    log.info("Successfully deleted product variant with ID {}", id);	
+	    log.info("Successfully deleted product variant with ID {}", id);
 	}
-	
+
 	private ProductVariantResponse mapToProductVariantResponse(ProductVariant variant) {
 		ProductVariantResponse response = new ProductVariantResponse();
-		
+
 		response.setId(variant.getId());
 		response.setProductId(variant.getProduct().getId());
 		response.setProductName(variant.getProduct().getName());
@@ -185,14 +186,14 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 		);
 		return response;
 	}
-	
+
 	private VariantAttributeResponse mapToVariantAttributeResponse(VariantAttribute attribute) {
 		VariantAttributeResponse response = new VariantAttributeResponse();
-		
+
 		response.setId(attribute.getId());
 		response.setAttributeName(attribute.getAttributeName());
 		response.setAttributeValue(attribute.getAttributeValue());
-		
+
 		return response;
 	}
 }

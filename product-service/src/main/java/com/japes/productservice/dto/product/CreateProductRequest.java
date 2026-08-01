@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "Request payload for creating a new product")
 public class CreateProductRequest {
-	
+
 	@Schema(
 		    description = "Product name",
 		    example = "iPhone 15 Pro"
@@ -21,7 +21,7 @@ public class CreateProductRequest {
 	@NotBlank(message = "name is required!")
 	@Size(max = 255, message = "Product name cannot exceed 255 characters")
 	private String name;
-	
+
 	@Schema(
 		    description = "Product description",
 		    example = "Apple iPhone 15 Pro with 256GB storage."
@@ -29,21 +29,21 @@ public class CreateProductRequest {
 	@NotBlank(message = "description is required!")
 	@Size(min = 10, message = "Description is too short")
 	private String description;
-	
+
 	@Schema(
             description = "Product brand",
             example = "Apple"
     )
     @NotBlank(message = "Brand is required")
 	private String brand;
-	
+
 	@Schema(
             description = "URL of the product image",
             example = "https://cdn.japes.com/images/iphone16.jpg"
     )
     @NotBlank(message = "Image URL is required")
 	private String imageUrl;
-	
+
 	@Schema(
             description = "Category identifier",
             example = "1"

@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Product Management", description = "APIs for managing products including create, retrieve, update, delete, search, pagination and sorting.")
 public class ProductController {
 	private final ProductService productService;
-	
+
 	@Operation(
 		    summary = "Create a new product",
 		    description = "Creates a new product after validating the request and ensuring the SKU is unique."
@@ -48,9 +48,9 @@ public class ProductController {
 	@PostMapping
 	public ResponseEntity<ProductResponse> saveproduct(@RequestBody @Valid CreateProductRequest productRequest) {
 		ProductResponse createdProduct = productService.saveProduct(productRequest);
-		return new ResponseEntity<ProductResponse>(createdProduct, HttpStatus.CREATED);
+		return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
 	}
-	
+
 	@Operation(
 		    summary = "Get all products",
 		    description = "Returns a paginated and sortable list of products."
@@ -72,7 +72,7 @@ public class ProductController {
 		ProductPageResponse response = productService.getProductList(page, size, sortBy, direction);
 		return ResponseEntity.ok(response);
 	}
-	
+
 	@Operation(
 		    summary = "Get product by ID",
 		    description = "Fetches a product using its unique identifier."
@@ -84,9 +84,9 @@ public class ProductController {
 	@GetMapping("/{id}")
 	public ResponseEntity<ProductResponse> getProductById(@Parameter(description = "Unique product ID", example = "1") @PathVariable Long id) {
 		ProductResponse response = productService.getProductById(id);
-		return new ResponseEntity<ProductResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@Operation(
 		    summary = "Update product",
 		    description = "Updates an existing product using its ID."
@@ -100,9 +100,9 @@ public class ProductController {
 	@PutMapping("/{id}")
 	public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody @Valid UpdateProductRequest updateProductRequest) {
 		ProductResponse response = productService.updateProduct(id, updateProductRequest);
-		return new ResponseEntity<ProductResponse>(response, HttpStatus.OK);
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
 	@Operation(
 		    summary = "Delete product",
 		    description = "Deletes a product using its ID."

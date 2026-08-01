@@ -46,7 +46,7 @@ public class ProductVariantServiceImplTest {
 	private ModelMapper modelMapper;
 	@InjectMocks
 	private ProductVariantServiceImpl productVariantServiceImpl;
-	
+
 	private Product product;
 	private ProductVariant productVariant;
 	private VariantAttribute variantAttribute;
@@ -54,7 +54,7 @@ public class ProductVariantServiceImplTest {
 	private UpdateProductVariantRequest updateRequest;
 	private VariantAttributeRequest attributeRequest;
 	private ProductVariantResponse response;
-	
+
 	@BeforeEach
 	void setUp() {
 	    product = new Product();
@@ -108,7 +108,7 @@ public class ProductVariantServiceImplTest {
 
 	    response.setAttributes(List.of(attributeResponse));
 	}
-	
+
 	@Test
 	void createProductVariant_ShouldCreateSuccessfully() {
 	    // Arrange
@@ -142,7 +142,7 @@ public class ProductVariantServiceImplTest {
 	    verify(productVariantRepository).existsBySkuCode(createRequest.getSkuCode());
 	    verify(productVariantRepository).save(any(ProductVariant.class));
 	}
-	
+
 	@Test
 	void createProductVariant_ShouldThrowProductNotFoundException() {
 	    // Arrange
@@ -160,7 +160,7 @@ public class ProductVariantServiceImplTest {
 	    verify(productVariantRepository, never()).existsBySkuCode(anyString());
 	    verify(productVariantRepository, never()).save(any());
 	}
-	
+
 	@Test
 	void createProductVariant_ShouldThrowProductVariantAlreadyExistsException() {
 	    // Arrange
@@ -180,7 +180,7 @@ public class ProductVariantServiceImplTest {
 	    verify(productVariantRepository).existsBySkuCode(createRequest.getSkuCode());
 	    verify(productVariantRepository, never()).save(any());
 	}
-	
+
 	@Test
 	void getProductVariantById_ShouldReturnVariantSuccessfully() {
 	    // Arrange
@@ -210,7 +210,7 @@ public class ProductVariantServiceImplTest {
 	    // Verify
 	    verify(productVariantRepository).findById(productVariant.getId());
 	}
-	
+
 	@Test
 	void getProductVariantById_ShouldThrowProductVariantNotFoundException() {
 	    // Arrange
@@ -226,7 +226,7 @@ public class ProductVariantServiceImplTest {
 	    // Verify
 	    verify(productVariantRepository).findById(productVariant.getId());
 	}
-	
+
 	@Test
 	void getProductVariantBySkuCode_ShouldReturnVariantSuccessfully() {
 	    // Arrange
@@ -256,7 +256,7 @@ public class ProductVariantServiceImplTest {
 	    // Verify
 	    verify(productVariantRepository).findBySkuCode(productVariant.getSkuCode());
 	}
-	
+
 	@Test
 	void getProductVariantBySkuCode_ShouldThrowProductVariantNotFoundException() {
 	    // Arrange
@@ -272,7 +272,7 @@ public class ProductVariantServiceImplTest {
 	    // Verify
 	    verify(productVariantRepository).findBySkuCode(productVariant.getSkuCode());
 	}
-	
+
 	@Test
 	void getProductVariantsByProductId_ShouldReturnVariantsSuccessfully() {
 	    // Arrange
@@ -304,7 +304,7 @@ public class ProductVariantServiceImplTest {
 	    verify(productRepository).findById(product.getId());
 	    verify(productVariantRepository).findByProductId(product.getId());
 	}
-	
+
 	@Test
 	void getProductVariantsByProductId_ShouldThrowProductNotFoundException() {
 	    // Arrange
@@ -321,7 +321,7 @@ public class ProductVariantServiceImplTest {
 	    verify(productRepository).findById(product.getId());
 	    verify(productVariantRepository, never()).findByProductId(anyLong());
 	}
-	
+
 	@Test
 	void updateProductVariant_ShouldUpdateSuccessfully() {
 	    // Arrange
@@ -342,7 +342,7 @@ public class ProductVariantServiceImplTest {
 	    verify(modelMapper).map(updateRequest, productVariant);
 	    verify(productVariantRepository).save(productVariant);
 	}
-	
+
 	@Test
 	void updateProductVariant_ShouldThrowProductVariantNotFoundException() {
 	    // Arrange
@@ -360,7 +360,7 @@ public class ProductVariantServiceImplTest {
 	    verify(modelMapper, never()).map(any(), any());
 	    verify(productVariantRepository, never()).save(any());
 	}
-	
+
 	@Test
 	void updateProductVariant_ShouldThrowProductVariantAlreadyExistsException() {
 	    // Arrange
@@ -380,7 +380,7 @@ public class ProductVariantServiceImplTest {
 	    verify(modelMapper, never()).map(any(), any());
 	    verify(productVariantRepository, never()).save(any());
 	}
-	
+
 	@Test
 	void deleteProductVariant_ShouldDeleteSuccessfully() {
 	    // Arrange
@@ -393,7 +393,7 @@ public class ProductVariantServiceImplTest {
 	    verify(productVariantRepository).findById(productVariant.getId());
 	    verify(productVariantRepository).delete(productVariant);
 	}
-	
+
 	@Test
 	void deleteProductVariant_ShouldThrowProductVariantNotFoundException() {
 	    // Arrange

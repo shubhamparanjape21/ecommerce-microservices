@@ -1,7 +1,5 @@
 package com.japes.productservice.service.impl;
 import java.util.List;
-
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductServiceImpl implements ProductService {
 	private final ProductRepository productRepository;
 	private final CategoryRepository categoryRepository;
-	private final ModelMapper modelMapper;
 
 	@Override
 	public ProductResponse saveProduct(CreateProductRequest request) {
@@ -51,8 +48,14 @@ public class ProductServiceImpl implements ProductService {
 		            "Product '" + request.getName() + "' of brand '" + request.getBrand() + "' already exists");
 		}
 		log.debug("Mapping CreateProductRequest to Product entity");
-		Product product = modelMapper.map(request, Product.class);
+		Product product = new Product();
+		product.setName(request.getName());
+		product.setDescription(request.getDescription());
+		product.setBrand(request.getBrand());
+		product.setImageUrl(request.getImageUrl());
+		log.info("Manual mapped product id = {}", product.getId());
 		product.setCategory(category);
+		log.info("Before save product id = {}", product.getId());
 		log.debug("Saving product to database");
 		Product savedProduct = productRepository.save(product);
 		log.info("Product created successfully with ID {}", savedProduct.getId());
@@ -118,7 +121,9 @@ public class ProductServiceImpl implements ProductService {
 		    && productRepository.existsByNameAndBrand(
 		            request.getName(),
 		            request.getBrand())) {
-
+			log.warn("Duplicate product '{}' of brand '{}' detected during update",
+	                request.getName(),
+	                request.getBrand());
 		    throw new ProductAlreadyExistsException("Product '" + request.getName() + "' of brand '" + request.getBrand() + "' already exists");
 		}
 		log.debug("Updating product details");
@@ -147,10 +152,10 @@ public class ProductServiceImpl implements ProductService {
 		productRepository.delete(existingProduct);
 		log.info("Product deleted successfully");
 	}
-	
+
 	private ProductResponse mapToProductResponse(Product product) {
 		ProductResponse response = new ProductResponse();
-		
+
 		response.setId(product.getId());
 		response.setName(product.getName());
 	    response.setDescription(product.getDescription());
@@ -160,7 +165,7 @@ public class ProductServiceImpl implements ProductService {
 
 	    response.setCategoryId(product.getCategory().getId());
 	    response.setCategoryName(product.getCategory().getName());
-	    
+
 	    return response;
 	}
 }

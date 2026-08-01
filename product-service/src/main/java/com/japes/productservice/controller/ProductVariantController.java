@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ProductVariantController {
 	private final ProductVariantService productVariantService;
-	
+
 	@PostMapping
 	@Operation(summary = "Create Product Variant")
     @ApiResponse(responseCode = "201", description = "Product Variant created successfully")
@@ -39,7 +39,7 @@ public class ProductVariantController {
 		ProductVariantResponse response = productVariantService.createProductVariant(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
-	
+
 	@GetMapping("/{id}")
     @Operation(summary = "Get Product Variant by ID")
     @ApiResponse(responseCode = "200", description = "Product Variant fetched successfully")
@@ -50,7 +50,7 @@ public class ProductVariantController {
         ProductVariantResponse response = productVariantService.getProductVariantById(id);
         return ResponseEntity.ok(response);
     }
-	
+
 	@GetMapping("/sku/{skuCode}")
     @Operation(summary = "Get Product Variant by SKU Code")
     @ApiResponse(responseCode = "200", description = "Product Variant fetched successfully")
@@ -61,7 +61,7 @@ public class ProductVariantController {
         ProductVariantResponse response = productVariantService.getProductVariantBySkuCode(skuCode);
         return ResponseEntity.ok(response);
     }
-	
+
 	@GetMapping("/product/{productId}")
     @Operation(summary = "Get all variants for a Product")
     @ApiResponse(responseCode = "200", description = "Product Variants fetched successfully")
@@ -72,7 +72,7 @@ public class ProductVariantController {
         List<ProductVariantResponse> response = productVariantService.getProductVariantsByProductId(productId);
         return ResponseEntity.ok(response);
     }
-	
+
 	@PutMapping("/{id}")
 	@Operation(summary = "Update Product Variant")
 	@ApiResponse(responseCode = "200", description = "Product Variant updated successfully")
@@ -87,7 +87,7 @@ public class ProductVariantController {
 
 	    return ResponseEntity.ok(response);
 	}
-	
+
 	@DeleteMapping("/{id}")
 	@Operation(summary = "Delete Product Variant")
 	@ApiResponse(responseCode = "204", description = "Product Variant deleted successfully")

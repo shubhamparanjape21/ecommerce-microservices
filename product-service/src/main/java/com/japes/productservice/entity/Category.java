@@ -16,10 +16,10 @@ import lombok.Setter;
 public class Category extends BaseModel{
 	@Column(nullable = false, unique = true)
 	private String name;
-	
+
 	@Column(length = 1000)
 	private String description;
-	
+
 	@OneToMany(mappedBy = "category")
 	private List<Product> products;
 }
