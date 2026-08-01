@@ -321,4 +321,63 @@ public class ProductVariantServiceImplTest {
 	    verify(productRepository).findById(product.getId());
 	    verify(productVariantRepository, never()).findByProductId(anyLong());
 	}
+	
+	@Test
+	void updateProductVariant_ShouldUpdateSuccessfully() {
+	    // Arrange
+	    when(productVariantRepository.findById(productVariant.getId())).thenReturn(Optional.of(productVariant));
+
+	    when(productVariantRepository.existsBySkuCode(updateRequest.getSkuCode())).thenReturn(false);
+
+	    when(productVariantRepository.save(productVariant)).thenReturn(productVariant);
+
+	    // Act
+	    ProductVariantResponse result = productVariantServiceImpl.updateProductVariant(productVariant.getId(), updateRequest);
+
+	    // Assert
+	    assertNotNull(result);
+
+	    // Verify
+	    verify(productVariantRepository).findById(productVariant.getId());
+	    verify(modelMapper).map(updateRequest, productVariant);
+	    verify(productVariantRepository).save(productVariant);
+	}
+	
+	@Test
+	void updateProductVariant_ShouldThrowProductVariantNotFoundException() {
+	    // Arrange
+	    when(productVariantRepository.findById(productVariant.getId())).thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    ProductVariantNotFoundException exception =
+	            assertThrows(ProductVariantNotFoundException.class,
+	                    () -> productVariantServiceImpl.updateProductVariant(productVariant.getId(), updateRequest));
+
+	    assertEquals("Product variant with ID "+ productVariant.getId() +" not found",  exception.getMessage());
+
+	    // Verify
+	    verify(productVariantRepository).findById(productVariant.getId());
+	    verify(modelMapper, never()).map(any(), any());
+	    verify(productVariantRepository, never()).save(any());
+	}
+	
+	@Test
+	void updateProductVariant_ShouldThrowProductVariantAlreadyExistsException() {
+	    // Arrange
+	    when(productVariantRepository.findById(productVariant.getId())).thenReturn(Optional.of(productVariant));
+
+	    when(productVariantRepository.existsBySkuCode(updateRequest.getSkuCode())).thenReturn(true);
+
+	    // Act & Assert
+	    ProductVariantAlreadyExistsException exception =
+	            assertThrows(ProductVariantAlreadyExistsException.class,
+	                    () -> productVariantServiceImpl.updateProductVariant(productVariant.getId(), updateRequest));
+
+	    assertEquals("Another product variant with SKU "+ updateRequest.getSkuCode() +" already exists", exception.getMessage());
+
+	    // Verify
+	    verify(productVariantRepository).findById(productVariant.getId());
+	    verify(modelMapper, never()).map(any(), any());
+	    verify(productVariantRepository, never()).save(any());
+	}
 }
