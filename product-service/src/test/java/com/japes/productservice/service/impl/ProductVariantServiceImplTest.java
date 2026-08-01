@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -270,5 +271,54 @@ public class ProductVariantServiceImplTest {
 
 	    // Verify
 	    verify(productVariantRepository).findBySkuCode(productVariant.getSkuCode());
+	}
+	
+	@Test
+	void getProductVariantsByProductId_ShouldReturnVariantsSuccessfully() {
+	    // Arrange
+	    when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+
+	    when(productVariantRepository.findByProductId(product.getId())).thenReturn(List.of(productVariant));
+
+	    // Act
+	    List<ProductVariantResponse> result = productVariantServiceImpl.getProductVariantsByProductId(product.getId());
+
+	    // Assert
+	    assertNotNull(result);
+
+	    assertEquals(1, result.size());
+
+	    ProductVariantResponse response = result.get(0);
+
+	    assertEquals(productVariant.getId(), response.getId());
+	    assertEquals(product.getId(), response.getProductId());
+	    assertEquals(product.getName(), response.getProductName());
+
+	    assertEquals(productVariant.getSkuCode(), response.getSkuCode());
+	    assertEquals(productVariant.getPrice(), response.getPrice());
+	    assertEquals(productVariant.getActive(), response.getActive());
+
+	    assertEquals(1, response.getAttributes().size());
+
+	    // Verify
+	    verify(productRepository).findById(product.getId());
+	    verify(productVariantRepository).findByProductId(product.getId());
+	}
+	
+	@Test
+	void getProductVariantsByProductId_ShouldThrowProductNotFoundException() {
+	    // Arrange
+	    when(productRepository.findById(product.getId())).thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    ProductNotFoundException exception =
+	            assertThrows(ProductNotFoundException.class,
+	                    () -> productVariantServiceImpl.getProductVariantsByProductId(product.getId()));
+
+	    assertEquals("Product with ID "+ product.getId() +" not found", exception.getMessage());
+
+	    // Verify
+	    verify(productRepository).findById(product.getId());
+	    verify(productVariantRepository, never()).findByProductId(anyLong());
 	}
 }
