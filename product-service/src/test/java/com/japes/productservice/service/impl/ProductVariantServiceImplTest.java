@@ -1,9 +1,20 @@
 package com.japes.productservice.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -18,6 +29,8 @@ import com.japes.productservice.dto.productvariant.VariantAttributeResponse;
 import com.japes.productservice.entity.Product;
 import com.japes.productservice.entity.ProductVariant;
 import com.japes.productservice.entity.VariantAttribute;
+import com.japes.productservice.exception.product.ProductNotFoundException;
+import com.japes.productservice.exception.productvariant.ProductVariantAlreadyExistsException;
 import com.japes.productservice.repository.ProductRepository;
 import com.japes.productservice.repository.ProductVariantRepository;
 
@@ -92,5 +105,77 @@ public class ProductVariantServiceImplTest {
 	    attributeResponse.setAttributeValue("128 GB");
 
 	    response.setAttributes(List.of(attributeResponse));
+	}
+	
+	@Test
+	void createProductVariant_ShouldCreateSuccessfully() {
+	    // Arrange
+	    when(productRepository.findById(createRequest.getProductId())).thenReturn(Optional.of(product));
+	    when(productVariantRepository.existsBySkuCode(createRequest.getSkuCode())).thenReturn(false);
+	    when(productVariantRepository.save(any(ProductVariant.class))).thenReturn(productVariant);
+
+	    // Act
+	    ProductVariantResponse result = productVariantServiceImpl.createProductVariant(createRequest);
+
+	    // Assert
+	    assertNotNull(result);
+
+	    assertEquals(productVariant.getId(), result.getId());
+	    assertEquals(product.getId(), result.getProductId());
+	    assertEquals(product.getName(), result.getProductName());
+
+	    assertEquals(productVariant.getSkuCode(), result.getSkuCode());
+	    assertEquals(productVariant.getPrice(), result.getPrice());
+	    assertEquals(productVariant.getActive(), result.getActive());
+
+	    assertEquals(1, result.getAttributes().size());
+
+	    VariantAttributeResponse attribute = result.getAttributes().get(0);
+
+	    assertEquals("Storage", attribute.getAttributeName());
+	    assertEquals("128 GB", attribute.getAttributeValue());
+
+	    // Verify
+	    verify(productRepository).findById(createRequest.getProductId());
+	    verify(productVariantRepository).existsBySkuCode(createRequest.getSkuCode());
+	    verify(productVariantRepository).save(any(ProductVariant.class));
+	}
+	
+	@Test
+	void createProductVariant_ShouldThrowProductNotFoundException() {
+	    // Arrange
+	    when(productRepository.findById(createRequest.getProductId())).thenReturn(Optional.empty());
+
+	    // Act & Assert
+	    ProductNotFoundException exception =
+	            assertThrows(ProductNotFoundException.class,
+	                    () -> productVariantServiceImpl.createProductVariant(createRequest));
+
+	    assertEquals("Product with ID 1 not found", exception.getMessage());
+
+	    // Verify
+	    verify(productRepository).findById(createRequest.getProductId());
+	    verify(productVariantRepository, never()).existsBySkuCode(anyString());
+	    verify(productVariantRepository, never()).save(any());
+	}
+	
+	@Test
+	void createProductVariant_ShouldThrowProductVariantAlreadyExistsException() {
+	    // Arrange
+	    when(productRepository.findById(createRequest.getProductId())).thenReturn(Optional.of(product));
+
+	    when(productVariantRepository.existsBySkuCode(createRequest.getSkuCode())).thenReturn(true);
+
+	    // Act & Assert
+	    ProductVariantAlreadyExistsException exception =
+	            assertThrows(ProductVariantAlreadyExistsException.class,
+	                    () -> productVariantServiceImpl.createProductVariant(createRequest));
+
+	    assertEquals("Product variant with SKU IPH16-128-BLK already exists", exception.getMessage());
+
+	    // Verify
+	    verify(productRepository).findById(createRequest.getProductId());
+	    verify(productVariantRepository).existsBySkuCode(createRequest.getSkuCode());
+	    verify(productVariantRepository, never()).save(any());
 	}
 }
