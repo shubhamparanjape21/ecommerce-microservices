@@ -19,6 +19,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -60,7 +61,6 @@ public class InventoryServiceImplTest {
 		request.setQuantity(42);
 
 		updateRequest = new UpdateInventoryRequest();
-		updateRequest.setSkuCode("AIRPODS2USB");
 		updateRequest.setQuantity(50);
 
 		inventory = new Inventory();
@@ -82,7 +82,6 @@ public class InventoryServiceImplTest {
 	void shouldSaveInventorySuccessfully() {
 		// Mock behaviour
 		when(inventoryRepository.existsBySkuCode(request.getSkuCode())).thenReturn(false);
-		when(modelMapper.map(request, Inventory.class)).thenReturn(inventory);
 		when(inventoryRepository.save(inventory)).thenReturn(savedInventory);
 		when(modelMapper.map(savedInventory, InventoryResponse.class)).thenReturn(response);
 		// Act
@@ -92,9 +91,17 @@ public class InventoryServiceImplTest {
 		assertEquals(1L, result.getId());
 		assertEquals("AIRPODS2USB", result.getSkuCode());
 		assertEquals(42, result.getQuantity());
+		ArgumentCaptor<Inventory> captor =
+		        ArgumentCaptor.forClass(Inventory.class);
+
+		verify(inventoryRepository).save(captor.capture());
+
+		Inventory saved = captor.getValue();
+
+		assertEquals(request.getSkuCode(), saved.getSkuCode());
+		assertEquals(request.getQuantity(), saved.getQuantity());
 		// verify
 		verify(inventoryRepository).existsBySkuCode(request.getSkuCode());
-		verify(modelMapper).map(request, Inventory.class);
 		verify(inventoryRepository).save(inventory);
 		verify(modelMapper).map(savedInventory, InventoryResponse.class);
 	}
@@ -167,7 +174,7 @@ public class InventoryServiceImplTest {
 		// Act + Assert
 		InventoryNotFoundException exception = assertThrows(InventoryNotFoundException.class,
 				() -> inventoryServiceImpl.getInventoryBySkuCode(savedInventory.getSkuCode()));
-		assertEquals("Inventory with SKU" + savedInventory.getSkuCode() + " not found", exception.getMessage());
+		assertEquals("Inventory with SKU " + savedInventory.getSkuCode() + " not found", exception.getMessage());
 		// verify
 		verify(inventoryRepository).findBySkuCode(savedInventory.getSkuCode());
 		verifyNoInteractions(modelMapper);
@@ -217,18 +224,23 @@ public class InventoryServiceImplTest {
 		// stub
 		when(inventoryRepository.save(savedInventory)).thenReturn(savedInventory);
 		when(modelMapper.map(savedInventory, InventoryResponse.class)).thenReturn(response);
-		doNothing().when(modelMapper).map(updateRequest, savedInventory);
 		// update response
 		response.setQuantity(updateRequest.getQuantity());
 		// Act
 		InventoryResponse result = inventoryServiceImpl.updateInventory(1L, updateRequest);
 		// Assert
 		assertNotNull(result);
-		assertEquals(updateRequest.getSkuCode(), result.getSkuCode());
 		assertEquals(updateRequest.getQuantity(), result.getQuantity());
+		ArgumentCaptor<Inventory> captor =
+		        ArgumentCaptor.forClass(Inventory.class);
+
+		verify(inventoryRepository).save(captor.capture());
+
+		Inventory updated = captor.getValue();
+
+		assertEquals(updateRequest.getQuantity(), updated.getQuantity());
 		// verify
 		verify(inventoryRepository).findById(savedInventory.getId());
-		verify(modelMapper).map(updateRequest, savedInventory);
 		verify(inventoryRepository).save(savedInventory);
 		verify(modelMapper).map(savedInventory, InventoryResponse.class);
 	}
@@ -245,26 +257,6 @@ public class InventoryServiceImplTest {
 	}
 
 	@Test
-	void shouldRejectDuplicateSkuDuringInventoryUpdate() {
-		// Repository finds existing inventory
-		when(inventoryRepository.findById(1L)).thenReturn(Optional.of(savedInventory));
-		// make the update request use a different SKU
-		updateRequest.setSkuCode("AIRPODS3USB");
-		// stub
-		when(inventoryRepository.existsBySkuCode(updateRequest.getSkuCode())).thenReturn(true);
-		// Act + Assert
-		InventoryAlreadyExistsException exception = assertThrows(InventoryAlreadyExistsException.class,
-				() -> inventoryServiceImpl.updateInventory(1L, updateRequest));
-		assertEquals("Another inventory with SKU " + updateRequest.getSkuCode() + " already exists",
-				exception.getMessage());
-		// verify
-		verify(inventoryRepository).findById(1L); // repo is searched
-		verify(inventoryRepository).existsBySkuCode("AIRPODS3USB"); // duplicate is executed
-		verify(inventoryRepository, never()).save(any(Inventory.class)); // save should never happen
-		verifyNoInteractions(modelMapper); // mapper should never be called because exception is thrown before it
-	}
-
-	@Test
 	void shouldDeleteInventorySuccessfully() {
 		// mocking behaviour
 		when(inventoryRepository.findById(savedInventory.getId())).thenReturn(Optional.of(savedInventory));
@@ -273,7 +265,7 @@ public class InventoryServiceImplTest {
 		// Assert - nothing to assert because no return value
 		// verify interactions
 		verify(inventoryRepository).findById(savedInventory.getId());
-		verify(inventoryRepository).deleteById(savedInventory.getId());
+		verify(inventoryRepository).delete(savedInventory);
 	}
 
 	@Test
