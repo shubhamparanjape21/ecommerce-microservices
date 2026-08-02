@@ -38,7 +38,9 @@ public class InventoryServiceImpl implements InventoryService {
 			throw new InventoryAlreadyExistsException("Inventory with SKU " + request.getSkuCode() + " already exists");
 		}
 		log.debug("Mapping CreateInventoryRequest to Inventory entity");
-		Inventory inventory = modelMapper.map(request, Inventory.class);
+		Inventory inventory = new Inventory();
+		inventory.setSkuCode(request.getSkuCode());
+		inventory.setQuantity(request.getQuantity());
 		log.debug("Saving inventory to database");
 		Inventory savedInventory = inventoryRepository.save(inventory);
 		log.info("Successfully created inventory with ID {}", savedInventory.getId());
@@ -91,7 +93,7 @@ public class InventoryServiceImpl implements InventoryService {
 		Inventory inventory = inventoryRepository.findBySkuCode(skuCode)
 				.orElseThrow(() -> {
 					log.warn("Inventory not found with SKU {}", skuCode);
-					return new InventoryNotFoundException("Inventory with SKU" + skuCode + " not found");
+					return new InventoryNotFoundException("Inventory with SKU " + skuCode + " not found");
 				});
 		log.debug("Mapping Inventory entity to InventoryResponse");
 		InventoryResponse response = modelMapper.map(inventory, InventoryResponse.class);
@@ -108,12 +110,8 @@ public class InventoryServiceImpl implements InventoryService {
 					log.warn("Inventory not found with ID {}", id);
 					return new InventoryNotFoundException("Inventory with ID " + id + " not found");
 				});
-		if(!existingInventory.getSkuCode().equals(updateRequest.getSkuCode()) && inventoryRepository.existsBySkuCode(updateRequest.getSkuCode())) {
-			log.warn("Duplicate SKU {} provided for update", updateRequest.getSkuCode());
-			throw new InventoryAlreadyExistsException("Another inventory with SKU " + updateRequest.getSkuCode() + " already exists");
-		}
 		log.debug("Mapping UpdateInventoryRequest to existing inventory entity");
-		modelMapper.map(updateRequest, existingInventory);
+		existingInventory.setQuantity(updateRequest.getQuantity());
 		log.debug("Saving updated inventory to database");
 		Inventory savedInventory = inventoryRepository.save(existingInventory);
 		log.debug("Mapping Inventory entity to InventoryResponse");
@@ -126,13 +124,13 @@ public class InventoryServiceImpl implements InventoryService {
 	public void deleteInventory(Long id) {
 		log.info("Received request to delete inventory with ID {}", id);
 		log.debug("Checking whether inventory with ID {} exists", id);
-		inventoryRepository.findById(id)
+		Inventory existingInventory = inventoryRepository.findById(id)
 				.orElseThrow(() -> {
 					log.warn("Inventory not found with ID {}", id);
 					return new InventoryNotFoundException("Inventory with ID " + id + " not found");
 				});
 		log.debug("Deleting inventory from database");
-		inventoryRepository.deleteById(id);
+		inventoryRepository.delete(existingInventory);
 		log.info("Successfully deleted inventory with ID {}", id);
 	}
 }
