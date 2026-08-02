@@ -139,7 +139,24 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 	    }
 	    log.debug("Mapping UpdateProductVariantRequest to existing ProductVariant");
 
-	    modelMapper.map(request, existingVariant);
+	    //modelMapper.map(request, existingVariant); - throwing error while modifying attributes - because of orphanRemoval = true
+	    // Manually update
+	    existingVariant.setActive(request.getActive());
+	    existingVariant.setPrice(request.getPrice());
+	    existingVariant.setSkuCode(request.getSkuCode());
+	    
+	    existingVariant.getAttributes().clear();
+	    List<VariantAttribute> attributes = request.getAttributes()
+	    		.stream()
+	    		.map(dto -> {
+	    			VariantAttribute attribute = new VariantAttribute();
+	    			attribute.setAttributeName(dto.getAttributeName());
+	    			attribute.setAttributeValue(dto.getAttributeValue());
+	    			attribute.setProductVariant(existingVariant);
+	    			return attribute;
+	    		})
+	    		.toList();
+	    existingVariant.getAttributes().addAll(attributes);
 
 	    log.debug("Saving updated product variant");
 
