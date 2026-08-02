@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ public class CreateInventoryRequest {
 	        requiredMode = Schema.RequiredMode.REQUIRED
 	    )
 	@NotBlank(message = "skuCode is required")
+	@Size(max = 100)
 	private String skuCode;
 	@Schema(
 	        description = "Available quantity of the product in inventory",
