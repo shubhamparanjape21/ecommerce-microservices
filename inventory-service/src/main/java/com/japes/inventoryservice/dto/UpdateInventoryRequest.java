@@ -14,13 +14,6 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Request payload for updating an existing inventory record")
 public class UpdateInventoryRequest {
     @Schema(
-            description = "Unique Stock Keeping Unit (SKU) of the product",
-            example = "IPH15PRO256",
-            requiredMode = Schema.RequiredMode.REQUIRED
-        )
-	@NotBlank(message = "skuCode is required")
-	private String skuCode;
-    @Schema(
             description = "Updated available quantity of the product in inventory",
             example = "30",
             requiredMode = Schema.RequiredMode.REQUIRED,
