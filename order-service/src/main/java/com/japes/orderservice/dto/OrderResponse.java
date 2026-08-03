@@ -1,5 +1,6 @@
 package com.japes.orderservice.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.japes.orderservice.enums.OrderStatus;
@@ -21,6 +22,10 @@ public class OrderResponse {
 	private Long userId;
 	@Schema(description = "Current order status", example = "PENDING")
 	private OrderStatus status;
-	@Schema(description = "Ordered items")
+	@Schema(description = "Order creation time")
+	private LocalDateTime createdAt;
+	@Schema(description = "Last updated time")
+	private LocalDateTime updatedAt;
+	@Schema(description = "List of items included in the order")
 	private List<OrderItemResponse> items;
 }
