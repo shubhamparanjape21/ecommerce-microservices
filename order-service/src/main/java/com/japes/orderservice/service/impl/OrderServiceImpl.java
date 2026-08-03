@@ -51,7 +51,8 @@ public class OrderServiceImpl implements OrderService {
 			 * Temporary price. Later we'll fetch actual product price from Product Service
 			 * using OpenFeign.
 			 */
-			item.setPrice(BigDecimal.ZERO);
+			item.setUnitPrice(BigDecimal.ZERO);
+			item.setSubTotal(BigDecimal.ZERO);
 			item.setOrder(order);
 			return item;
 		}).toList();
@@ -70,9 +71,9 @@ public class OrderServiceImpl implements OrderService {
 	private OrderResponse mapToOrderResponse(Order order) {
 
 		List<OrderItemResponse> items = order.getOrderItems().stream()
-				.map(item -> new OrderItemResponse(item.getSkuCode(), item.getQuantity(), item.getPrice())).toList();
+				.map(item -> new OrderItemResponse(item.getSkuCode(), item.getQuantity(), item.getUnitPrice(), item.getSubTotal())).toList();
 
-		return new OrderResponse(order.getId(), order.getOrderNumber(), order.getUserId(), order.getStatus(), items);
+		return new OrderResponse(order.getId(), order.getOrderNumber(), order.getUserId(), order.getStatus(), order.getCreatedAt(), order.getUpdatedAt(), items);
 	}
 
 	@Override
