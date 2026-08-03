@@ -5,6 +5,7 @@ import java.util.List;
 import com.japes.orderservice.enums.OrderStatus;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -22,16 +23,16 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Order {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+public class Order extends BaseModel{
 	/**
      * Business identifier shown to customers.
      * Example: ORD-20260722-000001
      */
+	@Column(nullable = false, unique = true)
 	private String orderNumber;
+	@Column(nullable = false)
 	private Long userId;
+	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private OrderStatus status;
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
