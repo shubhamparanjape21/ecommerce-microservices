@@ -16,5 +16,7 @@ public class OrderItemResponse {
 	@Schema(description = "Quantity ordered", example = "2")
 	private Integer quantity;
 	@Schema(description = "Price per unit", example = "12999.00")
-	private BigDecimal price;
+	private BigDecimal unitPrice;
+	@Schema(description = "Subtotal for this order item (quantity * unit price)", example = "25998.0")
+	private BigDecimal subTotal;
 }
