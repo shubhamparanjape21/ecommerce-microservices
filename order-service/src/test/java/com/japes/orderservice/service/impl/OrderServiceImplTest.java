@@ -71,7 +71,8 @@ public class OrderServiceImplTest {
 		savedItem.setId(1L);
 		savedItem.setSkuCode("AIRPODS2USB");
 		savedItem.setQuantity(2);
-		savedItem.setPrice(BigDecimal.ZERO);
+		savedItem.setUnitPrice(BigDecimal.ZERO);
+		savedItem.setSubTotal(BigDecimal.ZERO);
 
 		savedOrder = new Order();
 		savedOrder.setId(1L);
@@ -107,7 +108,8 @@ public class OrderServiceImplTest {
 
 		assertEquals("AIRPODS2USB", item.getSkuCode());
 		assertEquals(2, item.getQuantity());
-		assertEquals(BigDecimal.ZERO, item.getPrice());
+		assertEquals(BigDecimal.ZERO, item.getUnitPrice());
+		assertEquals(BigDecimal.ZERO, item.getSubTotal());
 
 		// Capture the Order passed to repository.save()
 		ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
@@ -131,7 +133,7 @@ public class OrderServiceImplTest {
 
 		assertEquals("AIRPODS2USB", capturedItem.getSkuCode());
 		assertEquals(2, capturedItem.getQuantity());
-		assertEquals(BigDecimal.ZERO, capturedItem.getPrice());
+		assertEquals(BigDecimal.ZERO, capturedItem.getUnitPrice());
 
 		// Verify bidirectional relationship
 		assertSame(capturedOrder, capturedItem.getOrder());
