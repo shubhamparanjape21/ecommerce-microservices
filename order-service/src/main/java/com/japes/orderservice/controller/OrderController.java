@@ -46,7 +46,7 @@ public class OrderController {
 	public ResponseEntity<OrderResponse> placeOrder(@RequestBody @Valid CreateOrderRequest request) {
 		log.info("Received request to place order for user {}", request.getUserId());
 		OrderResponse response = orderService.placeOrder(request);
-		return new ResponseEntity<OrderResponse>(response, HttpStatus.CREATED);
+		return ResponseEntity.ok(response);
 	}
 	
 	@Operation(summary = "Get order by order number", description = "Fetches order details using the unique order number.")
@@ -60,13 +60,12 @@ public class OrderController {
 			@PathVariable String orderNumber) {
 		log.info("Received request to fetch order {}", orderNumber);
 		OrderResponse response = orderService.getOrderByOrderNumber(orderNumber);
-		return new ResponseEntity<OrderResponse>(response, HttpStatus.OK);
+		return ResponseEntity.ok(response);
 	}
 	
 	@Operation(summary = "Get orders by user", description = "Returns paginated orders for a specific user.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Orders retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "User or Orders not found")
+            @ApiResponse(responseCode = "200", description = "Orders retrieved successfully")
     })
 	@GetMapping("/user/{userId}")
 	public ResponseEntity<OrderPageResponse> getOrdersByUserId(
@@ -77,10 +76,10 @@ public class OrderController {
 	        @RequestParam(defaultValue = "0") int page,
 	        
 	        @Parameter(description = "Page size", example = "10")
-	        @RequestParam(defaultValue = "2") int size,
+	        @RequestParam(defaultValue = "10") int size,
 	        
 	        @Parameter(description = "Sort field", example = "createdAt")
-	        @RequestParam(defaultValue = "id") String sortBy,
+	        @RequestParam(defaultValue = "createdAt") String sortBy,
 	        
 	        @Parameter(description = "Sort direction", example = "desc")
 	        @RequestParam(defaultValue = "desc") String direction) {
@@ -99,7 +98,7 @@ public class OrderController {
             @ApiResponse(responseCode = "404", description = "Order not found"),
             @ApiResponse(responseCode = "409", description = "Invalid status transition")
     })
-	@PutMapping("/{orderNumber}/status")
+	@PutMapping("/status/{orderNumber}")
 	public ResponseEntity<OrderResponse> updateOrderStatus(
 			@Parameter(description = "Unique order number", example = "ORD-8A7F3D9B")
 			@PathVariable String orderNumber,
@@ -115,7 +114,7 @@ public class OrderController {
             @ApiResponse(responseCode = "404", description = "Order not found"),
             @ApiResponse(responseCode = "409", description = "Order cannot be cancelled")
     })
-	@PatchMapping("/{orderNumber}/cancel")
+	@PatchMapping("/cancel/{orderNumber}")
 	public ResponseEntity<OrderResponse> cancelOrder(
 			@Parameter(description = "Unique order number", example = "ORD-8A7F3D9B")
 			@PathVariable String orderNumber){
