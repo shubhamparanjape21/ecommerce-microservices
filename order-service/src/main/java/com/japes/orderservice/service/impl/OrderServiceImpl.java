@@ -10,11 +10,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.japes.orderservice.client.InventoryClient;
+import com.japes.orderservice.client.ProductClient;
 import com.japes.orderservice.dto.CreateOrderRequest;
 import com.japes.orderservice.dto.OrderItemResponse;
 import com.japes.orderservice.dto.OrderPageResponse;
 import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.dto.UpdateOrderStatusRequest;
+import com.japes.orderservice.dto.client.InventoryResponse;
+import com.japes.orderservice.dto.client.ProductVariantResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
@@ -32,6 +36,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OrderServiceImpl implements OrderService {
 	private final OrderRepository orderRepository;
+	private final ProductClient productClient;
+	private final InventoryClient inventoryClient;
 
 	@Override
 	public OrderResponse placeOrder(CreateOrderRequest request) {
@@ -47,12 +53,38 @@ public class OrderServiceImpl implements OrderService {
 			OrderItem item = new OrderItem();
 			item.setSkuCode(itemRequest.getSkuCode());
 			item.setQuantity(itemRequest.getQuantity());
-			/*
-			 * Temporary price. Later we'll fetch actual product price from Product Service
-			 * using OpenFeign.
-			 */
-			item.setUnitPrice(BigDecimal.ZERO);
-			item.setSubTotal(BigDecimal.ZERO);
+			log.debug("Fetching product variant details for SKU {}", itemRequest.getSkuCode());
+			ProductVariantResponse productVariant = productClient.getProductVariantBySkuCode(itemRequest.getSkuCode());
+			log.debug("Validating whether product variant {} is active", itemRequest.getSkuCode());
+			if(!productVariant.isActive()) {
+				log.warn("Product variant {} is inactive", itemRequest.getSkuCode());
+				throw new IllegalArgumentException("Product Variant " + itemRequest.getSkuCode() + " is inactive");
+			}
+			log.debug("Fetching inventory details for SKU {}", itemRequest.getSkuCode());
+			InventoryResponse inventory = inventoryClient.getInventoryBySkuCode(itemRequest.getSkuCode());
+			log.debug(
+	                "Validating inventory for SKU {}. Available: {}, Requested: {}",
+	                itemRequest.getSkuCode(),
+	                inventory.getQuantity(),
+	                itemRequest.getQuantity());
+			if(inventory.getQuantity() < itemRequest.getQuantity()) {
+				log.warn(
+	                    "Insufficient stock for SKU {}. Available: {}, Requested: {}",
+	                    itemRequest.getSkuCode(),
+	                    inventory.getQuantity(),
+	                    itemRequest.getQuantity());
+				throw new IllegalArgumentException("Insufficient stock with sku " + itemRequest.getSkuCode());
+			}
+			log.debug("Setting unit price {} for SKU {}",
+	                productVariant.getPrice(),
+	                itemRequest.getSkuCode());
+			item.setUnitPrice(productVariant.getPrice());
+			
+			BigDecimal subTotal = productVariant.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
+			log.debug("Calculated subtotal {} for SKU {}",
+	                subTotal,
+	                itemRequest.getSkuCode());
+			item.setSubTotal(subTotal);
 			item.setOrder(order);
 			return item;
 		}).toList();
