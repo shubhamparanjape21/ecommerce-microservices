@@ -29,12 +29,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import com.japes.orderservice.client.InventoryClient;
+import com.japes.orderservice.client.ProductClient;
 import com.japes.orderservice.dto.CreateOrderRequest;
 import com.japes.orderservice.dto.OrderItemRequest;
 import com.japes.orderservice.dto.OrderItemResponse;
 import com.japes.orderservice.dto.OrderPageResponse;
 import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.dto.UpdateOrderStatusRequest;
+import com.japes.orderservice.dto.client.InventoryResponse;
+import com.japes.orderservice.dto.client.ProductVariantResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
@@ -49,12 +53,18 @@ public class OrderServiceImplTest {
 	private OrderRepository orderRepository;
 	@Mock
 	private ModelMapper modelMapper;
+	@Mock
+	private ProductClient productClient;
+	@Mock
+	private InventoryClient inventoryClient;
 	@InjectMocks
 	private OrderServiceImpl orderServiceImpl;
 
 	private CreateOrderRequest request;
 	private Order savedOrder;
 	private OrderResponse response;
+	private ProductVariantResponse productVariant;
+	private InventoryResponse inventory;
 
 	@BeforeEach
 	void setUp() {
@@ -71,22 +81,34 @@ public class OrderServiceImplTest {
 		savedItem.setId(1L);
 		savedItem.setSkuCode("AIRPODS2USB");
 		savedItem.setQuantity(2);
-		savedItem.setUnitPrice(BigDecimal.ZERO);
-		savedItem.setSubTotal(BigDecimal.ZERO);
+		savedItem.setUnitPrice(new BigDecimal("10000.00"));
+		savedItem.setSubTotal(new BigDecimal("20000.00"));
 
 		savedOrder = new Order();
 		savedOrder.setId(1L);
 		savedOrder.setOrderNumber("ORD-ABC12345");
 		savedOrder.setUserId(1L);
 		savedOrder.setStatus(OrderStatus.PENDING);
+		savedOrder.setTotalAmount(new BigDecimal("20000.00"));
 		savedOrder.setOrderItems(List.of(savedItem));
-
+		
 		savedItem.setOrder(savedOrder);
+		
+		productVariant = new ProductVariantResponse();
+		productVariant.setSkuCode("AIRPODS2USB");
+		productVariant.setPrice(new BigDecimal("10000.00"));
+		productVariant.setActive(true);
+		
+		inventory = new InventoryResponse();
+		inventory.setSkuCode("AIRPODS2USB");
+		inventory.setQuantity(10);
 	}
 
 	@Test
 	void shouldPlaceOrderSuccessfully() {
 		// Mock Behavior
+		when(productClient.getProductVariantBySkuCode("AIRPODS2USB")).thenReturn(productVariant);
+		when(inventoryClient.getInventoryBySkuCode("AIRPODS2USB")).thenReturn(inventory);
 		when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
 		// Act
@@ -100,7 +122,7 @@ public class OrderServiceImplTest {
 		assertEquals("ORD-ABC12345", result.getOrderNumber());
 		assertEquals(1L, result.getUserId());
 		assertEquals(OrderStatus.PENDING, result.getStatus());
-
+		assertEquals(new BigDecimal("20000.00"), result.getTotalAmount());
 		assertNotNull(result.getItems());
 		assertEquals(1, result.getItems().size());
 
@@ -108,8 +130,8 @@ public class OrderServiceImplTest {
 
 		assertEquals("AIRPODS2USB", item.getSkuCode());
 		assertEquals(2, item.getQuantity());
-		assertEquals(BigDecimal.ZERO, item.getUnitPrice());
-		assertEquals(BigDecimal.ZERO, item.getSubTotal());
+		assertEquals(new BigDecimal("10000.00"), item.getUnitPrice());
+		assertEquals(new BigDecimal("20000.00"), item.getSubTotal());
 
 		// Capture the Order passed to repository.save()
 		ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
@@ -125,6 +147,7 @@ public class OrderServiceImplTest {
 
 		assertEquals(1L, capturedOrder.getUserId());
 		assertEquals(OrderStatus.PENDING, capturedOrder.getStatus());
+		assertEquals(new BigDecimal("20000.00"), capturedOrder.getTotalAmount());
 
 		assertNotNull(capturedOrder.getOrderItems());
 		assertEquals(1, capturedOrder.getOrderItems().size());
@@ -133,10 +156,16 @@ public class OrderServiceImplTest {
 
 		assertEquals("AIRPODS2USB", capturedItem.getSkuCode());
 		assertEquals(2, capturedItem.getQuantity());
-		assertEquals(BigDecimal.ZERO, capturedItem.getUnitPrice());
+		assertEquals(new BigDecimal("10000.00"), capturedItem.getUnitPrice());
+		assertEquals(new BigDecimal("20000.00"), capturedItem.getSubTotal());
 
 		// Verify bidirectional relationship
 		assertSame(capturedOrder, capturedItem.getOrder());
+		
+		// Verify interactions
+	    verify(productClient).getProductVariantBySkuCode("AIRPODS2USB");
+	    verify(inventoryClient).getInventoryBySkuCode("AIRPODS2USB");
+	    verify(orderRepository).save(any(Order.class));
 	}
 
 	@Test

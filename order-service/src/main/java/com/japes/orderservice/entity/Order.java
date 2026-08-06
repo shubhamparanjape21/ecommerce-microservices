@@ -1,5 +1,6 @@
 package com.japes.orderservice.entity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.japes.orderservice.enums.OrderStatus;
@@ -32,6 +33,8 @@ public class Order extends BaseModel{
 	private String orderNumber;
 	@Column(nullable = false)
 	private Long userId;
+	@Column(nullable = false, precision = 10, scale = 2)
+	private BigDecimal totalAmount;
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
 	private OrderStatus status;

@@ -1,5 +1,6 @@
 package com.japes.orderservice.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,6 +21,8 @@ public class OrderResponse {
 	private String orderNumber;
 	@Schema(description = "User ID", example = "1")
 	private Long userId;
+	@Schema(description = "Total amount of the order", example = "7579945.00")
+	private BigDecimal totalAmount;
 	@Schema(description = "Current order status", example = "PENDING")
 	private OrderStatus status;
 	@Schema(description = "Order creation time")

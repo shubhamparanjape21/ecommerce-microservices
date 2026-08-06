@@ -92,6 +92,11 @@ public class OrderServiceImpl implements OrderService {
 		}).toList();
 
 		order.setOrderItems(orderItems);
+		
+		BigDecimal totalAmount = orderItems.stream()
+				.map(OrderItem::getSubTotal)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+		order.setTotalAmount(totalAmount);
 		log.debug("Saving order to database");
 		Order savedOrder = orderRepository.save(order);
 		log.info("Successfully placed order {}", savedOrder.getOrderNumber());
@@ -107,7 +112,7 @@ public class OrderServiceImpl implements OrderService {
 		List<OrderItemResponse> items = order.getOrderItems().stream()
 				.map(item -> new OrderItemResponse(item.getSkuCode(), item.getQuantity(), item.getUnitPrice(), item.getSubTotal())).toList();
 
-		return new OrderResponse(order.getId(), order.getOrderNumber(), order.getUserId(), order.getStatus(), order.getCreatedAt(), order.getUpdatedAt(), items);
+		return new OrderResponse(order.getId(), order.getOrderNumber(), order.getUserId(), order.getTotalAmount(), order.getStatus(), order.getCreatedAt(), order.getUpdatedAt(), items);
 	}
 
 	@Override
