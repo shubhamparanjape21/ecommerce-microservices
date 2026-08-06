@@ -22,9 +22,11 @@ import com.japes.orderservice.dto.client.ProductVariantResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
+import com.japes.orderservice.exception.InsufficientInventoryException;
 import com.japes.orderservice.exception.InvalidOrderStatusTransitionException;
 import com.japes.orderservice.exception.OrderAlreadyDeliveredException;
 import com.japes.orderservice.exception.OrderNotFoundException;
+import com.japes.orderservice.exception.ProductVariantInactiveException;
 import com.japes.orderservice.repository.OrderRepository;
 import com.japes.orderservice.service.OrderService;
 
@@ -58,7 +60,7 @@ public class OrderServiceImpl implements OrderService {
 			log.debug("Validating whether product variant {} is active", itemRequest.getSkuCode());
 			if(!productVariant.isActive()) {
 				log.warn("Product variant {} is inactive", itemRequest.getSkuCode());
-				throw new IllegalArgumentException("Product Variant " + itemRequest.getSkuCode() + " is inactive");
+				throw new ProductVariantInactiveException("Product Variant " + itemRequest.getSkuCode() + " is inactive");
 			}
 			log.debug("Fetching inventory details for SKU {}", itemRequest.getSkuCode());
 			InventoryResponse inventory = inventoryClient.getInventoryBySkuCode(itemRequest.getSkuCode());
@@ -73,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
 	                    itemRequest.getSkuCode(),
 	                    inventory.getQuantity(),
 	                    itemRequest.getQuantity());
-				throw new IllegalArgumentException("Insufficient stock with sku " + itemRequest.getSkuCode());
+				throw new InsufficientInventoryException("Insufficient stock with sku " + itemRequest.getSkuCode());
 			}
 			log.debug("Setting unit price {} for SKU {}",
 	                productVariant.getPrice(),
