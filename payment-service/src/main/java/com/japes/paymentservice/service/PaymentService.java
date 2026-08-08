@@ -5,4 +5,5 @@ import com.japes.paymentservice.dto.PaymentResponse;
 
 public interface PaymentService {
 	public PaymentResponse createPayment(CreatePaymentRequest request);
+	public PaymentResponse getPaymentByReference(String paymentReference);
 }

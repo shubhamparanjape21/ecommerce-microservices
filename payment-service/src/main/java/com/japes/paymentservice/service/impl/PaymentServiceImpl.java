@@ -8,6 +8,7 @@ import com.japes.paymentservice.dto.CreatePaymentRequest;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.entity.Payment;
 import com.japes.paymentservice.enums.PaymentStatus;
+import com.japes.paymentservice.exception.PaymentNotFoundException;
 import com.japes.paymentservice.repository.PaymentRepository;
 import com.japes.paymentservice.service.PaymentService;
 
@@ -74,6 +75,24 @@ public class PaymentServiceImpl implements PaymentService {
 				
 		);
 				
+	}
+
+	@Override
+	public PaymentResponse getPaymentByReference(String paymentReference) {
+		log.info("Received request to fetch payment {}", paymentReference);
+
+	    log.debug("Searching payment by reference {}", paymentReference);
+	    
+		Payment payment = paymentRepository.findByPaymentReference(paymentReference)
+				.orElseThrow(() -> {
+					log.warn("Payment not found with reference {}", paymentReference);
+					return new PaymentNotFoundException("Payment not found with reference " + paymentReference);
+				});
+		
+		log.info("Successfully fetched payment {} for order {}",
+	            payment.getPaymentReference(),
+	            payment.getOrderNumber());
+		return mapToPaymentResponse(payment);
 	}
 
 }
