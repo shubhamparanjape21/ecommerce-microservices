@@ -90,4 +90,29 @@ public class PaymentController {
 	    return ResponseEntity.ok(response);
 	}
 	
+	@Operation(
+	        summary = "Get payment by order number",
+	        description = "Retrieves payment details using the order number."
+	)
+	@ApiResponses(value = {
+	        @ApiResponse(
+	                responseCode = "200",
+	                description = "Payment retrieved successfully"
+	        ),
+	        @ApiResponse(
+	                responseCode = "404",
+	                description = "Payment not found for the order"
+	        )
+	})
+	@GetMapping("/order/{orderNumber}")
+	public ResponseEntity<PaymentResponse> getPaymentByOrderNumber(
+	        @PathVariable String orderNumber) {
+
+	    log.info("Received request to fetch payment for order {}", orderNumber);
+
+	    PaymentResponse response = paymentService.getPaymentByOrderNumber(orderNumber);
+
+	    return ResponseEntity.ok(response);
+	}
+	
 }

@@ -95,4 +95,21 @@ public class PaymentServiceImpl implements PaymentService {
 		return mapToPaymentResponse(payment);
 	}
 
+	@Override
+	public PaymentResponse getPaymentByOrderNumber(String orderNumber) {
+		log.debug("Searching payment by order number {}", orderNumber);
+		
+		Payment payment = paymentRepository.findByOrderNumber(orderNumber)
+				.orElseThrow(() -> {
+					log.warn("Payment not found for order {}", orderNumber);
+					return new PaymentNotFoundException("Payment not found for order " + orderNumber);
+				});
+		
+		log.info("Successfully fetched payment {} for order {}",
+	            payment.getPaymentReference(),
+	            orderNumber);
+		
+		return mapToPaymentResponse(payment);
+	}
+
 }
