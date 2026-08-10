@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 
 import com.japes.paymentservice.dto.CreatePaymentRequest;
 import com.japes.paymentservice.dto.PaymentResponse;
+import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
 import com.japes.paymentservice.entity.Payment;
 import com.japes.paymentservice.enums.PaymentStatus;
+import com.japes.paymentservice.exception.InvalidPaymentStatusException;
 import com.japes.paymentservice.exception.PaymentNotFoundException;
 import com.japes.paymentservice.repository.PaymentRepository;
 import com.japes.paymentservice.service.PaymentService;
@@ -53,29 +55,6 @@ public class PaymentServiceImpl implements PaymentService {
         
         return mapToPaymentResponse(savedPayment);
 	}
-	
-	private String generatePaymentReference() {
-		return "PAY-" + UUID.randomUUID()
-		.toString()
-		.substring(0, 8)
-		.toUpperCase();
-	}
-	
-	private PaymentResponse mapToPaymentResponse(Payment payment) {
-		return new PaymentResponse(
-				payment.getId(),
-				payment.getPaymentReference(),
-				payment.getOrderNumber(),
-				payment.getAmount(),
-				payment.getPaymentMethod(),
-				payment.getPaymentStatus(),
-				payment.getTransactionId(),
-				payment.getCreatedAt(),
-				payment.getUpdatedAt()
-				
-		);
-				
-	}
 
 	@Override
 	public PaymentResponse getPaymentByReference(String paymentReference) {
@@ -110,6 +89,77 @@ public class PaymentServiceImpl implements PaymentService {
 	            orderNumber);
 		
 		return mapToPaymentResponse(payment);
+	}
+	
+	@Override
+	public PaymentResponse updatePaymentStatus(String paymentReference, UpdatePaymentStatusRequest request) {
+		log.info("Received request to update payment {} to status {}", paymentReference, request.getPaymentStatus());
+		
+		Payment payment = paymentRepository.findByPaymentReference(paymentReference)
+				.orElseThrow(() -> {
+					log.warn("Payment not found with reference {}", paymentReference);
+					return new PaymentNotFoundException("Payment not found with reference {}" + paymentReference);
+				});
+		
+		log.debug("Current status of payment {} is {}", paymentReference, payment.getPaymentStatus());
+
+	    // Payment status can only be changed from PENDING
+		if(payment.getPaymentStatus() != PaymentStatus.PENDING) {
+			log.warn("Cannot update payment {} because current status is {}", paymentReference, payment.getPaymentStatus());
+
+			throw new InvalidPaymentStatusException("Payment " + paymentReference + " cannot be updated because its current status is " + payment.getPaymentStatus());
+		}
+		
+		PaymentStatus newStatus = request.getPaymentStatus();
+		
+		if(newStatus == PaymentStatus.PENDING) {
+			log.warn("Invalid status update for payment {}: PENDING", paymentReference);
+
+	        throw new InvalidPaymentStatusException("Payment status cannot be changed to PENDING");
+		}
+		
+		// SUCCESS
+		if(newStatus == PaymentStatus.SUCCESS) {
+			if(request.getTransactionId() == null || request.getTransactionId().isBlank()) {
+				log.warn("Transaction ID missing for successful payment {}", paymentReference);
+
+	            throw new InvalidPaymentStatusException("Transaction ID is required for successful payment");
+			}
+			payment.setPaymentStatus(newStatus);
+			payment.setTransactionId(request.getTransactionId());
+			log.info("Payment {} marked SUCCESS with transaction ID {}", paymentReference, request.getTransactionId());
+		} else if(newStatus == PaymentStatus.FAILED) { // FAILED
+			payment.setPaymentStatus(newStatus);
+			payment.setTransactionId(null);
+			log.info("Payment {} marked FAILED", paymentReference);
+		}
+		
+		Payment updatedPayment = paymentRepository.save(payment);
+		log.info("Successfully updated payment {} to status {}", paymentReference, updatedPayment.getPaymentStatus());
+		return mapToPaymentResponse(updatedPayment);
+	}
+	
+	private String generatePaymentReference() {
+		return "PAY-" + UUID.randomUUID()
+		.toString()
+		.substring(0, 8)
+		.toUpperCase();
+	}
+	
+	private PaymentResponse mapToPaymentResponse(Payment payment) {
+		return new PaymentResponse(
+				payment.getId(),
+				payment.getPaymentReference(),
+				payment.getOrderNumber(),
+				payment.getAmount(),
+				payment.getPaymentMethod(),
+				payment.getPaymentStatus(),
+				payment.getTransactionId(),
+				payment.getCreatedAt(),
+				payment.getUpdatedAt()
+				
+		);
+				
 	}
 
 }

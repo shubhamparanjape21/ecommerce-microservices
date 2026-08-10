@@ -3,6 +3,7 @@ package com.japes.paymentservice.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.paymentservice.dto.CreatePaymentRequest;
 import com.japes.paymentservice.dto.PaymentResponse;
+import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
 import com.japes.paymentservice.service.PaymentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -111,6 +113,36 @@ public class PaymentController {
 	    log.info("Received request to fetch payment for order {}", orderNumber);
 
 	    PaymentResponse response = paymentService.getPaymentByOrderNumber(orderNumber);
+
+	    return ResponseEntity.ok(response);
+	}
+	
+	@Operation(
+	        summary = "Update payment status",
+	        description = "Updates a pending payment to SUCCESS or FAILED."
+	)
+	@ApiResponses(value = {
+	        @ApiResponse(
+	                responseCode = "200",
+	                description = "Payment status updated successfully"
+	        ),
+	        @ApiResponse(
+	                responseCode = "400",
+	                description = "Invalid payment status or transaction ID"
+	        ),
+	        @ApiResponse(
+	                responseCode = "404",
+	                description = "Payment not found"
+	        )
+	})
+	@PatchMapping("/status/{paymentReference}")
+	public ResponseEntity<PaymentResponse> updatePaymentStatus(
+	        @PathVariable String paymentReference,
+	        @RequestBody @Valid UpdatePaymentStatusRequest request) {
+
+	    log.info("Received request to update payment {} status", paymentReference);
+
+	    PaymentResponse response = paymentService.updatePaymentStatus(paymentReference, request);
 
 	    return ResponseEntity.ok(response);
 	}

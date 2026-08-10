@@ -32,4 +32,12 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(apiError);
     }
+	@ExceptionHandler(InvalidPaymentStatusException.class)
+	public ResponseEntity<ApiError> handleInvalidPaymentException(InvalidPaymentStatusException ex, WebRequest request) {
+		log.warn("Invalid payment status operation: {}", ex.getMessage());
+		
+		ApiError apiError = new ApiError(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage(),request.getDescription(false).replace("uri=", ""));
+		
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+	}
 }
