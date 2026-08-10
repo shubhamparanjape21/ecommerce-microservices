@@ -9,4 +9,5 @@ public interface PaymentService {
 	public PaymentResponse getPaymentByReference(String paymentReference);
 	public PaymentResponse getPaymentByOrderNumber(String orderNumber);
 	public PaymentResponse updatePaymentStatus(String paymentReference, UpdatePaymentStatusRequest request);
+	public PaymentResponse refundPayment(String paymentReference);
 }

@@ -147,4 +147,28 @@ public class PaymentController {
 	    return ResponseEntity.ok(response);
 	}
 	
+	@Operation(
+	        summary = "Refund payment",
+	        description = "Refunds a successful payment."
+	)
+	@ApiResponses(value = {
+	        @ApiResponse(
+	                responseCode = "200",
+	                description = "Payment refunded successfully"
+	        ),
+	        @ApiResponse(
+	                responseCode = "400",
+	                description = "Payment cannot be refunded"
+	        ),
+	        @ApiResponse(
+	                responseCode = "404",
+	                description = "Payment not found"
+	        )
+	})
+	@PatchMapping("/refund/{paymentReference}")
+	public ResponseEntity<PaymentResponse> refundPayment(@PathVariable String paymentReference) {
+	    PaymentResponse response = paymentService.refundPayment(paymentReference);
+	    return ResponseEntity.ok(response);
+	}
+	
 }
