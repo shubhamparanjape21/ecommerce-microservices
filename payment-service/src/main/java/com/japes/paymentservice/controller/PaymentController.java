@@ -8,11 +8,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.paymentservice.dto.CreatePaymentRequest;
+import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
+import com.japes.paymentservice.enums.PaymentStatus;
 import com.japes.paymentservice.service.PaymentService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -168,6 +171,27 @@ public class PaymentController {
 	@PatchMapping("/refund/{paymentReference}")
 	public ResponseEntity<PaymentResponse> refundPayment(@PathVariable String paymentReference) {
 	    PaymentResponse response = paymentService.refundPayment(paymentReference);
+	    return ResponseEntity.ok(response);
+	}
+	
+	@GetMapping("/status/{status}")
+	@Operation(
+	        summary = "Get payments by status",
+	        description = "Returns paginated payments filtered by payment status."
+	)
+	@ApiResponses(value = {
+	        @ApiResponse(
+	                responseCode = "200",
+	                description = "Payments retrieved successfully"
+	        ),
+	        @ApiResponse(
+	                responseCode = "400",
+	                description = "Invalid request parameters"
+	        )
+	})
+	public ResponseEntity<PaymentPageResponse> getPaymentsByStatus(@PathVariable PaymentStatus status, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "createdAt") String sortBy, @RequestParam(defaultValue = "desc") String direction) {
+	    log.info("Received request to fetch payments by status {}", status);
+	    PaymentPageResponse response = paymentService.getPaymentsByStatus(status, page, size, sortBy, direction);
 	    return ResponseEntity.ok(response);
 	}
 	

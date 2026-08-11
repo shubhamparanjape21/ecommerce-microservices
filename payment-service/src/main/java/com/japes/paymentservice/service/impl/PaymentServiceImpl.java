@@ -1,10 +1,16 @@
 package com.japes.paymentservice.service.impl;
 
+import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.japes.paymentservice.dto.CreatePaymentRequest;
+import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
 import com.japes.paymentservice.entity.Payment;
@@ -186,6 +192,27 @@ public class PaymentServiceImpl implements PaymentService {
 	    Payment refundedPayment = paymentRepository.save(payment);
 	    log.info("Successfully refunded payment {}", paymentReference);
 	    return mapToPaymentResponse(refundedPayment);
+	}
+
+	@Override
+	public PaymentPageResponse getPaymentsByStatus(PaymentStatus status, int page, int pageSize, String sortBy, String direction) {
+		log.info("Received request to fetch payments with status {} | page={}, size={}, sortBy={}, direction={}", status, page, pageSize, sortBy, direction);
+		
+		Sort sort = direction.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+		Pageable pageable = PageRequest.of(page, pageSize, sort);
+		
+		log.debug("Fetching payments from database with pageable {}", pageable);
+		
+		Page<Payment> paymentPage = paymentRepository.findByPaymentStatus(status, pageable);
+		
+		List<PaymentResponse> payments = paymentPage.getContent()
+				.stream()
+				.map(this::mapToPaymentResponse)
+				.toList();
+		
+		log.info("Successfully fetched {} payments with status {}", payments.size(), status);
+		
+		return new PaymentPageResponse(payments, paymentPage.getNumber(), paymentPage.getSize(), paymentPage.getTotalElements(), paymentPage.getTotalPages(), paymentPage.isFirst(), paymentPage.isLast());
 	}
 
 }
