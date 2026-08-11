@@ -48,4 +48,12 @@ public class GlobalExceptionHandler {
 		
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
 	}
+	@ExceptionHandler(PaymentInitiationException.class)
+	public ResponseEntity<ApiError> handlePaymentInitiationException(PaymentInitiationException ex, WebRequest request) {
+		log.warn("Payment initiation failed: {}", ex.getMessage());
+		
+		ApiError apiError = new ApiError(LocalDateTime.now(), HttpStatus.BAD_GATEWAY.value(), HttpStatus.BAD_GATEWAY.getReasonPhrase(), ex.getMessage(),request.getDescription(false).replace("uri=", ""));
+		
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(apiError);
+	}
 }
