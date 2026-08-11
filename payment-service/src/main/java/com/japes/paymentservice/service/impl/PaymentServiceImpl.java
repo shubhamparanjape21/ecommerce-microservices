@@ -10,14 +10,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.japes.paymentservice.dto.CreatePaymentRequest;
-import com.japes.paymentservice.dto.PaymentInitiationResponse;
 import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
 import com.japes.paymentservice.entity.Payment;
 import com.japes.paymentservice.enums.PaymentStatus;
 import com.japes.paymentservice.exception.InvalidPaymentStatusException;
-import com.japes.paymentservice.exception.PaymentInitiationException;
 import com.japes.paymentservice.exception.PaymentNotFoundException;
 import com.japes.paymentservice.exception.PaymentRefundException;
 import com.japes.paymentservice.repository.PaymentRepository;
@@ -216,10 +214,4 @@ public class PaymentServiceImpl implements PaymentService {
 		
 		return new PaymentPageResponse(payments, paymentPage.getNumber(), paymentPage.getSize(), paymentPage.getTotalElements(), paymentPage.getTotalPages(), paymentPage.isFirst(), paymentPage.isLast());
 	}
-
-	@Override
-	public PaymentInitiationResponse initiatePayment(String paymentReference) {
-		return null;
-	}
-
 }

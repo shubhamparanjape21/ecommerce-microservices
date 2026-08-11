@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.paymentservice.dto.CreatePaymentRequest;
-import com.japes.paymentservice.dto.PaymentInitiationResponse;
 import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
@@ -195,30 +194,4 @@ public class PaymentController {
 	    PaymentPageResponse response = paymentService.getPaymentsByStatus(status, page, size, sortBy, direction);
 	    return ResponseEntity.ok(response);
 	}
-	
-	@Operation(
-	        summary = "Initiate Stripe payment",
-	        description = "Creates a Stripe PaymentIntent for a pending payment."
-	)
-	@ApiResponses(value = {
-	        @ApiResponse(
-	                responseCode = "200",
-	                description = "Payment initiated successfully"
-	        ),
-	        @ApiResponse(
-	                responseCode = "400",
-	                description = "Payment cannot be initiated"
-	        ),
-	        @ApiResponse(
-	                responseCode = "404",
-	                description = "Payment not found"
-	        )
-	})
-	@PostMapping("/initiate/{paymentReference}")
-	public ResponseEntity<PaymentInitiationResponse> initiatePayment(@PathVariable String paymentReference) {
-	    log.info("Received request to initiate payment {}", paymentReference);
-	    PaymentInitiationResponse response = paymentService.initiatePayment(paymentReference);
-	    return ResponseEntity.ok(response);
-	}
-	
 }
