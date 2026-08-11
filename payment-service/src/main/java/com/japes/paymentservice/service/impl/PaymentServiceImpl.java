@@ -9,7 +9,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import com.japes.paymentservice.client.StripePaymentClient;
 import com.japes.paymentservice.dto.CreatePaymentRequest;
 import com.japes.paymentservice.dto.PaymentInitiationResponse;
 import com.japes.paymentservice.dto.PaymentPageResponse;
@@ -23,8 +22,6 @@ import com.japes.paymentservice.exception.PaymentNotFoundException;
 import com.japes.paymentservice.exception.PaymentRefundException;
 import com.japes.paymentservice.repository.PaymentRepository;
 import com.japes.paymentservice.service.PaymentService;
-import com.stripe.exception.StripeException;
-import com.stripe.model.PaymentIntent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentServiceImpl implements PaymentService {
 	
 	private final PaymentRepository paymentRepository;
-	
-	private final StripePaymentClient stripePaymentClient;
 	
 	private String generatePaymentReference() {
 		return "PAY-" + UUID.randomUUID()
@@ -224,36 +219,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 	@Override
 	public PaymentInitiationResponse initiatePayment(String paymentReference) {
-		log.info("Received request to initiate payment for {}", paymentReference);
-
-	    Payment payment = paymentRepository.findByPaymentReference(paymentReference)
-	            .orElseThrow(() -> {
-	                log.warn("Payment not found with reference {}", paymentReference);
-	                return new PaymentNotFoundException("Payment not found with reference " + paymentReference);
-	            });
-
-	    if (payment.getPaymentStatus() != PaymentStatus.PENDING) {
-	        log.warn("Cannot initiate payment {} because current status is {}", paymentReference, payment.getPaymentStatus());
-	        throw new InvalidPaymentStatusException("Payment can only be initiated when status is PENDING");
-	    }
-
-	    try {
-	        PaymentIntent paymentIntent = stripePaymentClient.createPaymentIntent(payment.getAmount(), payment.getPaymentReference());
-	        payment.setStripePaymentIntentId(paymentIntent.getId());
-	        Payment savedPayment = paymentRepository.save(payment);
-	        log.info("Payment {} successfully linked with Stripe PaymentIntent {}", paymentReference, paymentIntent.getId());
-
-	        return new PaymentInitiationResponse(
-	                savedPayment.getPaymentReference(),
-	                paymentIntent.getId(),
-	                paymentIntent.getClientSecret(),
-	                savedPayment.getAmount(),
-	                savedPayment.getPaymentStatus());
-
-	    } catch (StripeException ex) {
-	        log.error("Stripe payment initiation failed for payment {}", paymentReference, ex);
-	        throw new PaymentInitiationException("Unable to initiate payment with Stripe");
-	    }
+		return null;
 	}
 
 }
