@@ -26,4 +26,7 @@ public class PaymentInitiationResponse {
 
 	    @Schema(description = "Current payment status", example = "PENDING")
 	    private String paymentStatus;
+	    
+	    @Schema(description = "Razorpay public key ID used by the checkout", example = "rzp_test_XXXXXXXXXXXX")
+	    private String razorpayKeyId;
 }

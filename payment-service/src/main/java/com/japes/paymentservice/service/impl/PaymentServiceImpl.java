@@ -3,6 +3,7 @@ package com.japes.paymentservice.service.impl;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,9 @@ public class PaymentServiceImpl implements PaymentService {
 	
 	private final PaymentRepository paymentRepository;
 	private final RazorpayPaymentClient razorpayPaymentClient;
+	
+	@Value("${razorpay.key-id}")
+	private String razorpayKeyId;
 	
 	private String generatePaymentReference() {
 		return "PAY-" + UUID.randomUUID()
@@ -258,8 +262,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 	        log.info("Razorpay order ID saved for payment {}", paymentReference);
 
-	        return new PaymentInitiationResponse(payment.getPaymentReference(), razorpayOrderId, payment.getAmount(), "INR", payment.getPaymentStatus().name()
-	        );
+	        return new PaymentInitiationResponse(payment.getPaymentReference(), razorpayOrderId, payment.getAmount(), "INR", payment.getPaymentStatus().name(), razorpayKeyId);
 
 	    } catch (RazorpayException ex) {
 
