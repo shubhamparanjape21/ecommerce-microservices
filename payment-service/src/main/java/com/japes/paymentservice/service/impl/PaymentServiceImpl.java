@@ -9,17 +9,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.japes.paymentservice.client.RazorpayPaymentClient;
 import com.japes.paymentservice.dto.CreatePaymentRequest;
+import com.japes.paymentservice.dto.PaymentInitiationResponse;
 import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
 import com.japes.paymentservice.entity.Payment;
 import com.japes.paymentservice.enums.PaymentStatus;
 import com.japes.paymentservice.exception.InvalidPaymentStatusException;
+import com.japes.paymentservice.exception.PaymentInitiationException;
 import com.japes.paymentservice.exception.PaymentNotFoundException;
 import com.japes.paymentservice.exception.PaymentRefundException;
 import com.japes.paymentservice.repository.PaymentRepository;
 import com.japes.paymentservice.service.PaymentService;
+import com.razorpay.Order;
+import com.razorpay.RazorpayException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentServiceImpl implements PaymentService {
 	
 	private final PaymentRepository paymentRepository;
+	private final RazorpayPaymentClient razorpayPaymentClient;
 	
 	private String generatePaymentReference() {
 		return "PAY-" + UUID.randomUUID()
@@ -213,5 +219,53 @@ public class PaymentServiceImpl implements PaymentService {
 		log.info("Successfully fetched {} payments with status {}", payments.size(), status);
 		
 		return new PaymentPageResponse(payments, paymentPage.getNumber(), paymentPage.getSize(), paymentPage.getTotalElements(), paymentPage.getTotalPages(), paymentPage.isFirst(), paymentPage.isLast());
+	}
+
+	@Override
+	public PaymentInitiationResponse initiatePayment(String paymentReference) {
+		log.info("Received request to initiate payment for {}", paymentReference);
+
+	    Payment payment = paymentRepository.findByPaymentReference(paymentReference)
+	            .orElseThrow(() -> {
+	                log.warn("Payment not found for reference {}", paymentReference);
+
+	                return new PaymentNotFoundException("Payment not found: " + paymentReference);
+	            });
+
+	    log.debug("Payment found. reference={}, status={}, amount={}", payment.getPaymentReference(), payment.getPaymentStatus(), payment.getAmount());
+
+	    // Payment must be in PENDING state
+	    if (payment.getPaymentStatus() != PaymentStatus.PENDING) {
+
+	        log.warn("Cannot initiate payment {} because current status is {}", paymentReference, payment.getPaymentStatus());
+
+	        throw new InvalidPaymentStatusException("Payment cannot be initiated in status: " + payment.getPaymentStatus());
+	    }
+
+	    try {
+
+	        log.info("Creating Razorpay order for payment {}", paymentReference);
+
+	        Order razorpayOrder = razorpayPaymentClient.createOrder(payment.getAmount(), payment.getPaymentReference());
+
+	        String razorpayOrderId = razorpayOrder.get("id");
+
+	        log.info("Razorpay order created successfully. paymentReference={}, razorpayOrderId={}", paymentReference, razorpayOrderId);
+
+	        payment.setRazorpayOrderId(razorpayOrderId);
+
+	        paymentRepository.save(payment);
+
+	        log.info("Razorpay order ID saved for payment {}", paymentReference);
+
+	        return new PaymentInitiationResponse(payment.getPaymentReference(), razorpayOrderId, payment.getAmount(), "INR", payment.getPaymentStatus().name()
+	        );
+
+	    } catch (RazorpayException ex) {
+
+	        log.error("Razorpay payment initiation failed for payment {}", paymentReference, ex);
+
+	        throw new PaymentInitiationException("Unable to initiate payment with Razorpay");
+	    }
 	}
 }
