@@ -36,4 +36,6 @@ public class Payment extends BaseModel {
 	private PaymentStatus paymentStatus;
 	@Column(unique = true, length = 30)
 	private String transactionId;
+	@Column(unique = true, length = 50)
+	private String razorpayOrderId;
 }
