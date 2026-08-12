@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Razorpay Test Payment</title>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+
+<body>
+
+    <h2>Razorpay Test Payment</h2>
+
+    <button onclick="startPayment()">
+        Pay ₹399
+    </button>
+
+    <script>
+
+        async function startPayment() {
+
+            // Step 1: Call our Payment Service
+            const response = await fetch(
+                "http://localhost:8084/api/v1/payments/initiate/PAY-B41678EE",
+                {
+                    method: "POST"
+                }
+            );
+
+            if (!response.ok) {
+                alert("Unable to initiate payment");
+                return;
+            }
+
+            const payment = await response.json();
+
+            console.log("Payment initiation response:", payment);
+
+            // Step 2: Configure Razorpay Checkout
+            const options = {
+
+                key: payment.razorpayKeyId,
+
+                amount: payment.amount * 100,
+
+                currency: payment.currency,
+
+                name: "Japes Ecommerce",
+
+                description: "Test Payment",
+
+                order_id: payment.razorpayOrderId,
+
+                handler: function (response) {
+
+                    console.log(
+                        "Razorpay payment response:",
+                        response
+                    );
+
+                    alert(
+                        "Payment completed!\n" +
+                        "Payment ID: " +
+                        response.razorpay_payment_id
+                    );
+                }
+            };
+
+            // Step 3: Open Razorpay Checkout
+            const razorpay =
+                new Razorpay(options);
+
+            razorpay.open();
+        }
+
+    </script>
+
+</body>
+</html>
