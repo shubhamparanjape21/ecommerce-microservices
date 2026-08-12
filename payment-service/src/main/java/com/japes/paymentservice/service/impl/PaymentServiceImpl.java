@@ -3,6 +3,7 @@ package com.japes.paymentservice.service.impl;
 import java.util.List;
 import java.util.UUID;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,16 +17,19 @@ import com.japes.paymentservice.dto.PaymentInitiationResponse;
 import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
+import com.japes.paymentservice.dto.VerifyPaymentRequest;
 import com.japes.paymentservice.entity.Payment;
 import com.japes.paymentservice.enums.PaymentStatus;
 import com.japes.paymentservice.exception.InvalidPaymentStatusException;
 import com.japes.paymentservice.exception.PaymentInitiationException;
 import com.japes.paymentservice.exception.PaymentNotFoundException;
 import com.japes.paymentservice.exception.PaymentRefundException;
+import com.japes.paymentservice.exception.PaymentVerificationException;
 import com.japes.paymentservice.repository.PaymentRepository;
 import com.japes.paymentservice.service.PaymentService;
 import com.razorpay.Order;
 import com.razorpay.RazorpayException;
+import com.razorpay.Utils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +44,9 @@ public class PaymentServiceImpl implements PaymentService {
 	
 	@Value("${razorpay.key-id}")
 	private String razorpayKeyId;
+	
+	@Value("${razorpay.key-secret}")
+	private String razorpayKeySecret;
 	
 	private String generatePaymentReference() {
 		return "PAY-" + UUID.randomUUID()
@@ -269,6 +276,50 @@ public class PaymentServiceImpl implements PaymentService {
 	        log.error("Razorpay payment initiation failed for payment {}", paymentReference, ex);
 
 	        throw new PaymentInitiationException("Unable to initiate payment with Razorpay");
+	    }
+	}
+
+	@Override
+	public PaymentResponse verifyPayment(VerifyPaymentRequest request) {
+		log.info("Received request to verify Razorpay payment. orderId={}, paymentId={}", request.getRazorpayOrderId(), request.getRazorpayPaymentId());
+
+	    try {
+	    	JSONObject options = new JSONObject();
+
+	    	options.put("razorpay_order_id", request.getRazorpayOrderId());
+	    	options.put("razorpay_payment_id", request.getRazorpayPaymentId());
+	    	options.put("razorpay_signature", request.getRazorpaySignature());
+
+	    	boolean signatureValid = Utils.verifyPaymentSignature(options, razorpayKeySecret);
+
+	        if (!signatureValid) {
+	            log.warn("Invalid Razorpay signature for orderId={}, paymentId={}", request.getRazorpayOrderId(), request.getRazorpayPaymentId());
+	            throw new PaymentVerificationException("Invalid Razorpay payment signature");
+	        }
+
+	        log.info("Razorpay payment signature verified successfully for orderId={}", request.getRazorpayOrderId());
+
+	        Payment payment = paymentRepository.findByRazorpayOrderId(request.getRazorpayOrderId())
+	                .orElseThrow(() -> {
+	                    log.warn("Payment not found for Razorpay order ID {}", request.getRazorpayOrderId());
+
+	                    return new PaymentNotFoundException("Payment not found for Razorpay order ID: " + request.getRazorpayOrderId());
+	                });
+
+	        payment.setTransactionId(request.getRazorpayPaymentId());
+	        payment.setPaymentStatus(PaymentStatus.SUCCESS);
+	        Payment savedPayment = paymentRepository.save(payment);
+
+	        log.info("Payment verified and updated successfully. paymentReference={}, transactionId={}, status={}",
+	                savedPayment.getPaymentReference(),
+	                savedPayment.getTransactionId(),
+	                savedPayment.getPaymentStatus());
+
+	        return mapToPaymentResponse(savedPayment);
+
+	    } catch (RazorpayException ex) {
+	        log.error("Razorpay payment verification failed for orderId={}", request.getRazorpayOrderId(), ex);
+	        throw new PaymentVerificationException("Unable to verify Razorpay payment");
 	    }
 	}
 }

@@ -5,6 +5,7 @@ import com.japes.paymentservice.dto.PaymentInitiationResponse;
 import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
+import com.japes.paymentservice.dto.VerifyPaymentRequest;
 import com.japes.paymentservice.enums.PaymentStatus;
 
 public interface PaymentService {
@@ -15,4 +16,5 @@ public interface PaymentService {
 	public PaymentResponse refundPayment(String paymentReference);
 	public PaymentPageResponse getPaymentsByStatus(PaymentStatus status, int page, int pageSize, String sortBy, String direction);
 	public PaymentInitiationResponse initiatePayment(String paymentReference);
+	public PaymentResponse verifyPayment(VerifyPaymentRequest request);
 }

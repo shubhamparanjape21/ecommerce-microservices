@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Razorpay Test Payment</title>
@@ -51,18 +52,34 @@
 
                 order_id: payment.razorpayOrderId,
 
-                handler: function (response) {
+                handler: async function (response) {
 
-                    console.log(
-                        "Razorpay payment response:",
-                        response
+                    console.log("Razorpay response:", response);
+
+                    const verifyResponse = await fetch(
+                        "http://localhost:8084/api/v1/payments/verify",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                razorpayOrderId: response.razorpay_order_id,
+                                razorpayPaymentId: response.razorpay_payment_id,
+                                razorpaySignature: response.razorpay_signature
+                            })
+                        }
                     );
 
-                    alert(
-                        "Payment completed!\n" +
-                        "Payment ID: " +
-                        response.razorpay_payment_id
-                    );
+                    const result = await verifyResponse.json();
+
+                    console.log("Verification response:", result);
+
+                    if (verifyResponse.ok) {
+                        alert("Payment verified successfully!");
+                    } else {
+                        alert("Payment verification failed!");
+                    }
                 }
             };
 
@@ -76,4 +93,5 @@
     </script>
 
 </body>
+
 </html>

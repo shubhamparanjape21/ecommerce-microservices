@@ -13,4 +13,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 	public Optional<Payment> findByPaymentReference(String paymentReference);
 	public Optional<Payment> findByOrderNumber(String orderNumber);
 	Page<Payment> findByPaymentStatus(PaymentStatus status, Pageable pageable);
+	Optional<Payment> findByRazorpayOrderId(String razorpayOrderId);
 }

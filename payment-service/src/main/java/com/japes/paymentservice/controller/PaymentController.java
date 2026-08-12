@@ -17,6 +17,7 @@ import com.japes.paymentservice.dto.PaymentInitiationResponse;
 import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
+import com.japes.paymentservice.dto.VerifyPaymentRequest;
 import com.japes.paymentservice.enums.PaymentStatus;
 import com.japes.paymentservice.service.PaymentService;
 
@@ -212,6 +213,18 @@ public class PaymentController {
 	    log.info("Received request to initiate payment {}", paymentReference);
 	    PaymentInitiationResponse response = paymentService.initiatePayment(paymentReference);
 	    log.info("Payment initiation completed successfully for {}", paymentReference);
+	    return ResponseEntity.ok(response);
+	}
+	
+	@Operation(
+	        summary = "Verify Razorpay payment",
+	        description = "Verifies the Razorpay payment signature and updates the payment status"
+	)
+	@PostMapping("/verify")
+	public ResponseEntity<PaymentResponse> verifyPayment(@Valid @RequestBody VerifyPaymentRequest request) {
+	    log.info("Received request to verify Razorpay payment. orderId={}, paymentId={}", request.getRazorpayOrderId(), request.getRazorpayPaymentId());
+	    PaymentResponse response = paymentService.verifyPayment(request);
+	    log.info("Razorpay payment verification completed successfully. paymentId={}", request.getRazorpayPaymentId());
 	    return ResponseEntity.ok(response);
 	}
 }
