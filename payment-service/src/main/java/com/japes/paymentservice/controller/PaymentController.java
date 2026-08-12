@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.paymentservice.dto.CreatePaymentRequest;
+import com.japes.paymentservice.dto.PaymentInitiationResponse;
 import com.japes.paymentservice.dto.PaymentPageResponse;
 import com.japes.paymentservice.dto.PaymentResponse;
 import com.japes.paymentservice.dto.UpdatePaymentStatusRequest;
@@ -192,6 +193,18 @@ public class PaymentController {
 	public ResponseEntity<PaymentPageResponse> getPaymentsByStatus(@PathVariable PaymentStatus status, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "createdAt") String sortBy, @RequestParam(defaultValue = "desc") String direction) {
 	    log.info("Received request to fetch payments by status {}", status);
 	    PaymentPageResponse response = paymentService.getPaymentsByStatus(status, page, size, sortBy, direction);
+	    return ResponseEntity.ok(response);
+	}
+	
+	@Operation(
+	        summary = "Initiate payment",
+	        description = "Creates a Razorpay order for an existing pending payment"
+	)
+	@PostMapping("/initiate/{paymentReference}")
+	public ResponseEntity<PaymentInitiationResponse> initiatePayment(@PathVariable String paymentReference) {
+	    log.info("Received request to initiate payment {}", paymentReference);
+	    PaymentInitiationResponse response = paymentService.initiatePayment(paymentReference);
+	    log.info("Payment initiation completed successfully for {}", paymentReference);
 	    return ResponseEntity.ok(response);
 	}
 }
