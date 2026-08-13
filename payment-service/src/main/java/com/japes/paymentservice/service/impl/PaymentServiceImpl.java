@@ -330,13 +330,44 @@ public class PaymentServiceImpl implements PaymentService {
 	public void handleWebhook(String payload, String signature) {
 		log.info("Received Razorpay webhook");
 	    try {
-	        boolean valid = Utils.verifyWebhookSignature(payload, signature, razorpayWebhookSecret);
-	        if (!valid) {
-	        	log.warn("Invalid Razorpay webhook signature");
-	            throw new PaymentVerificationException("Invalid Razorpay webhook signature");
-	        }
+	        Utils.verifyWebhookSignature(payload, signature, razorpayWebhookSecret);
+	       
 	        log.info("Razorpay webhook signature verified successfully");
-	        // JSON parsing will come next
+	        
+	        JSONObject webhook = new JSONObject(payload);
+
+	        String event = webhook.getString("event");
+
+	        log.info("Received Razorpay webhook event: {}", event);
+
+	        if (!event.equals("payment.captured") && !event.equals("payment.failed")) {
+	            log.info("Ignoring unsupported Razorpay webhook event: {}", event);
+	            return;
+	        }
+
+	        JSONObject paymentEntity = webhook
+	                .getJSONObject("payload")
+	                .getJSONObject("payment")
+	                .getJSONObject("entity");
+
+	        String razorpayPaymentId = paymentEntity.getString("id");
+
+	        String razorpayOrderId = paymentEntity.getString("order_id");
+
+	        Payment payment = paymentRepository.findByRazorpayOrderId(razorpayOrderId)
+	                .orElseThrow(() -> new PaymentNotFoundException("Payment not found for Razorpay order ID: " + razorpayOrderId));
+
+	        payment.setTransactionId(razorpayPaymentId);
+
+	        if ("payment.captured".equals(event)) {
+	            payment.setPaymentStatus(PaymentStatus.SUCCESS);
+	        } else {
+	            payment.setPaymentStatus(PaymentStatus.FAILED);
+	        }
+	        paymentRepository.save(payment);
+	        
+	        log.info("Payment updated successfully through Razorpay webhook. reference={}, status={}", payment.getPaymentReference(), payment.getPaymentStatus());
+	        
 	    } catch (RazorpayException ex) {
 	        log.error("Razorpay webhook signature verification failed", ex);
 	        throw new PaymentVerificationException("Unable to verify Razorpay webhook");
