@@ -48,6 +48,9 @@ public class PaymentServiceImpl implements PaymentService {
 	@Value("${razorpay.key-secret}")
 	private String razorpayKeySecret;
 	
+	@Value("${razorpay.webhook-secret}")
+	private String razorpayWebhookSecret;
+	
 	private String generatePaymentReference() {
 		return "PAY-" + UUID.randomUUID()
 		.toString()
@@ -321,5 +324,23 @@ public class PaymentServiceImpl implements PaymentService {
 	        log.error("Razorpay payment verification failed for orderId={}", request.getRazorpayOrderId(), ex);
 	        throw new PaymentVerificationException("Unable to verify Razorpay payment");
 	    }
+	}
+
+	@Override
+	public void handleWebhook(String payload, String signature) {
+		log.info("Received Razorpay webhook");
+	    try {
+	        boolean valid = Utils.verifyWebhookSignature(payload, signature, razorpayWebhookSecret);
+	        if (!valid) {
+	        	log.warn("Invalid Razorpay webhook signature");
+	            throw new PaymentVerificationException("Invalid Razorpay webhook signature");
+	        }
+	        log.info("Razorpay webhook signature verified successfully");
+	        // JSON parsing will come next
+	    } catch (RazorpayException ex) {
+	        log.error("Razorpay webhook signature verification failed", ex);
+	        throw new PaymentVerificationException("Unable to verify Razorpay webhook");
+	    }
+		
 	}
 }

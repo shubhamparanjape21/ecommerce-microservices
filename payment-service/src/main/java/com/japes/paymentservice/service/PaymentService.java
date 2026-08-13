@@ -17,4 +17,5 @@ public interface PaymentService {
 	public PaymentPageResponse getPaymentsByStatus(PaymentStatus status, int page, int pageSize, String sortBy, String direction);
 	public PaymentInitiationResponse initiatePayment(String paymentReference);
 	public PaymentResponse verifyPayment(VerifyPaymentRequest request);
+	public void handleWebhook(String payload, String signature);
 }

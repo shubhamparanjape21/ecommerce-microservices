@@ -56,4 +56,12 @@ public class GlobalExceptionHandler {
 		
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(apiError);
 	}
+	@ExceptionHandler(PaymentVerificationException.class)
+	public ResponseEntity<ApiError> handlePaymentVerificationException(PaymentVerificationException ex, WebRequest request) {
+		log.warn("Payment verification failed: {}", ex.getMessage());
+		
+		ApiError apiError = new ApiError(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), ex.getMessage(),request.getDescription(false).replace("uri=", ""));
+		
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
+	}
 }

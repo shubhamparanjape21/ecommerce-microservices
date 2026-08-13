@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -227,4 +228,28 @@ public class PaymentController {
 	    log.info("Razorpay payment verification completed successfully. paymentId={}", request.getRazorpayPaymentId());
 	    return ResponseEntity.ok(response);
 	}
+	@Operation(
+		    summary = "Handle Razorpay webhook",
+		    description = "Receives and processes payment events sent by Razorpay"
+		)
+	@ApiResponses({
+			@ApiResponse(
+		        responseCode = "200",
+		        description = "Webhook received successfully"
+		    ),
+		    @ApiResponse(
+		        responseCode = "400",
+		        description = "Invalid webhook request"
+		    ),
+		    @ApiResponse(
+		        responseCode = "401",
+		        description = "Invalid webhook signature"
+		    )
+		})
+	@PostMapping("/webhook")
+	public ResponseEntity<Void> handleWebhook(@RequestBody String payload, @RequestHeader("X-Razorpay-Signature") String signature) {
+		    log.info("Received Razorpay webhook");
+		    paymentService.handleWebhook(payload, signature);
+		    return ResponseEntity.ok().build();
+		}
 }
