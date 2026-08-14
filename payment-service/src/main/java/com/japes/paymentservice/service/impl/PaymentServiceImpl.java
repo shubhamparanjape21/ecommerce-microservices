@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.japes.paymentservice.client.OrderClient;
 import com.japes.paymentservice.client.RazorpayPaymentClient;
 import com.japes.paymentservice.dto.CreatePaymentRequest;
 import com.japes.paymentservice.dto.PaymentInitiationResponse;
@@ -41,6 +42,7 @@ public class PaymentServiceImpl implements PaymentService {
 	
 	private final PaymentRepository paymentRepository;
 	private final RazorpayPaymentClient razorpayPaymentClient;
+	private final OrderClient orderClient;
 	
 	@Value("${razorpay.key-id}")
 	private String razorpayKeyId;
@@ -271,6 +273,10 @@ public class PaymentServiceImpl implements PaymentService {
 	        paymentRepository.save(payment);
 
 	        log.info("Razorpay order ID saved for payment {}", paymentReference);
+	        
+	        log.info("Marking order {} as PAYMENT_PENDING", payment.getOrderNumber());
+
+	        orderClient.markPaymentPending(payment.getOrderNumber());
 
 	        return new PaymentInitiationResponse(payment.getPaymentReference(), razorpayOrderId, payment.getAmount(), "INR", payment.getPaymentStatus().name(), razorpayKeyId);
 
