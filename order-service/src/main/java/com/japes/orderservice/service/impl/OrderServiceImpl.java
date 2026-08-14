@@ -12,13 +12,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.japes.orderservice.client.InventoryClient;
+import com.japes.orderservice.client.PaymentClient;
 import com.japes.orderservice.client.ProductClient;
 import com.japes.orderservice.dto.CreateOrderRequest;
 import com.japes.orderservice.dto.OrderItemResponse;
 import com.japes.orderservice.dto.OrderPageResponse;
 import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.dto.UpdateOrderStatusRequest;
+import com.japes.orderservice.dto.client.CreatePaymentRequest;
 import com.japes.orderservice.dto.client.InventoryResponse;
+import com.japes.orderservice.dto.client.PaymentInitiationResponse;
+import com.japes.orderservice.dto.client.PaymentResponse;
 import com.japes.orderservice.dto.client.ProductVariantResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
@@ -41,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
 	private final OrderRepository orderRepository;
 	private final ProductClient productClient;
 	private final InventoryClient inventoryClient;
+	private final PaymentClient paymentClient;
 
 	@Override
 	public OrderResponse placeOrder(CreateOrderRequest request) {
@@ -101,6 +106,19 @@ public class OrderServiceImpl implements OrderService {
 		log.debug("Saving order to database");
 		Order savedOrder = orderRepository.save(order);
 		log.info("Successfully placed order {}", savedOrder.getOrderNumber());
+		
+	    // Create payment automatically
+
+	    CreatePaymentRequest paymentRequest = new CreatePaymentRequest(savedOrder.getOrderNumber(), savedOrder.getTotalAmount(), request.getPaymentMethod());
+	    log.info("Creating payment for order {} using payment method {}", savedOrder.getOrderNumber(), request.getPaymentMethod());
+	    PaymentResponse paymentResponse = paymentClient.createPayment(paymentRequest);
+	    log.info("Payment {} created successfully for order {}", paymentResponse.getPaymentReference(), savedOrder.getOrderNumber());
+
+	    // Initiate Razorpay payment automatically
+
+	    log.info("Initiating payment {} for order {}", paymentResponse.getPaymentReference(), savedOrder.getOrderNumber());
+	    PaymentInitiationResponse initiationResponse = paymentClient.initiatePayment(paymentResponse.getPaymentReference());
+	    log.info("Payment {} initiated successfully with Razorpay order {}", initiationResponse.getPaymentReference(), initiationResponse.getRazorpayOrderId());
 		return mapToOrderResponse(savedOrder);
 	}
 
