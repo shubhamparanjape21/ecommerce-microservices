@@ -367,10 +367,14 @@ public class PaymentServiceImpl implements PaymentService {
 
 	        if ("payment.captured".equals(event)) {
 	            payment.setPaymentStatus(PaymentStatus.SUCCESS);
+	            paymentRepository.save(payment);
+	            log.info("Payment {} successful. Notifying Order Service for order {}", payment.getPaymentReference(), payment.getOrderNumber());
+	            orderClient.handleSuccessfulPayment(payment.getOrderNumber());
 	        } else {
 	            payment.setPaymentStatus(PaymentStatus.FAILED);
+	            paymentRepository.save(payment);
+	            log.info("Payment {} failed for order {}", payment.getPaymentReference(), payment.getOrderNumber());
 	        }
-	        paymentRepository.save(payment);
 	        
 	        log.info("Payment updated successfully through Razorpay webhook. reference={}, status={}", payment.getPaymentReference(), payment.getPaymentStatus());
 	        
