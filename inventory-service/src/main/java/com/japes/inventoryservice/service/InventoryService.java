@@ -12,4 +12,5 @@ public interface InventoryService {
 	InventoryResponse getInventoryBySkuCode(String skuCode);
 	InventoryResponse updateInventory(Long id, UpdateInventoryRequest updateRequest);
 	void deleteInventory(Long id);
+	void reduceInventory(String skuCode, int quantity);
 }

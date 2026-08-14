@@ -41,6 +41,12 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<ApiError>(error, HttpStatus.NOT_FOUND);
 	}
 	
+	@ExceptionHandler(InsufficientInventoryException.class)
+	public ResponseEntity<ApiError> handleInsufficientInventoryExceptions(InsufficientInventoryException ex) {
+		ApiError error = new ApiError(HttpStatus.CONFLICT.value(), ex.getMessage(), LocalDateTime.now());
+		return new ResponseEntity<ApiError>(error, HttpStatus.CONFLICT);
+	}
+	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiError> handleAllExceptions(Exception ex) {
 		log.error("Unhandled exception occurred", ex);

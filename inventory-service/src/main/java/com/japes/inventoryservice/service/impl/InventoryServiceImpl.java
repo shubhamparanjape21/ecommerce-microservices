@@ -14,6 +14,7 @@ import com.japes.inventoryservice.dto.InventoryPageResponse;
 import com.japes.inventoryservice.dto.InventoryResponse;
 import com.japes.inventoryservice.dto.UpdateInventoryRequest;
 import com.japes.inventoryservice.entity.Inventory;
+import com.japes.inventoryservice.exception.InsufficientInventoryException;
 import com.japes.inventoryservice.exception.InventoryAlreadyExistsException;
 import com.japes.inventoryservice.exception.InventoryNotFoundException;
 import com.japes.inventoryservice.repository.InventoryRepository;
@@ -132,5 +133,24 @@ public class InventoryServiceImpl implements InventoryService {
 		log.debug("Deleting inventory from database");
 		inventoryRepository.delete(existingInventory);
 		log.info("Successfully deleted inventory with ID {}", id);
+	}
+
+	@Override
+	public void reduceInventory(String skuCode, int quantity) {
+		log.info("Reducing inventory for SKU {} by {}", skuCode, quantity);
+
+	    Inventory inventory = inventoryRepository.findBySkuCode(skuCode)
+	            .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for SKU " + skuCode));
+
+	    log.debug("Current inventory for SKU {} is {}", skuCode, inventory.getQuantity());
+
+	    if (inventory.getQuantity() < quantity) {
+	        log.warn("Insufficient inventory for SKU {}. Available: {}, Requested: {}", skuCode, inventory.getQuantity(), quantity);
+
+	        throw new InsufficientInventoryException("Insufficient inventory for SKU " + skuCode);
+	    }
+	    inventory.setQuantity(inventory.getQuantity() - quantity);
+	    inventoryRepository.save(inventory);
+	    log.info("Inventory successfully reduced for SKU {}. Remaining quantity: {}", skuCode, inventory.getQuantity());
 	}
 }
