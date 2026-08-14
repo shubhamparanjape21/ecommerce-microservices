@@ -19,6 +19,7 @@ import com.japes.inventoryservice.dto.UpdateInventoryRequest;
 import com.japes.inventoryservice.service.InventoryService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -123,5 +124,40 @@ public class InventoryController {
 	public ResponseEntity<InventoryResponse> deleteInventoryById(@PathVariable Long id) {
 		inventoryService.deleteInventory(id);
 		return ResponseEntity.noContent().build();
+	}
+	
+	
+	@Operation(
+	        summary = "Reduce inventory",
+	        description = "Reduces the available inventory quantity for a product variant identified by its SKU code."
+	)
+	@ApiResponses({
+	        @ApiResponse(
+	                responseCode = "204",
+	                description = "Inventory reduced successfully"
+	        ),
+	        @ApiResponse(
+	                responseCode = "400",
+	                description = "Invalid SKU code or quantity"
+	        ),
+	        @ApiResponse(
+	                responseCode = "404",
+	                description = "Inventory not found for the given SKU code"
+	        ),
+	        @ApiResponse(
+	                responseCode = "409",
+	                description = "Insufficient inventory"
+	        )
+	})
+	@PutMapping("/reduce")
+	public ResponseEntity<Void> reduceInventory(
+	        @Parameter(description = "SKU code of the product variant", example = "SHOE-NIKE-AIR-M-BLK")
+	        @RequestParam String skuCode,
+
+	        @Parameter(description = "Quantity to reduce from inventory", example = "2")
+	        @RequestParam int quantity) {
+
+	    inventoryService.reduceInventory(skuCode, quantity);
+	    return ResponseEntity.noContent().build();
 	}
 }
