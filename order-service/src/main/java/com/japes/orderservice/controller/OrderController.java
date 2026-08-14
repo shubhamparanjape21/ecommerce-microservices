@@ -1,6 +1,5 @@
 package com.japes.orderservice.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -123,4 +122,25 @@ public class OrderController {
 		return ResponseEntity.ok(response);
 	}
 	
+	@Operation(
+	        summary = "Mark order payment as pending",
+	        description = "Updates the payment status of the specified order to PAYMENT_PENDING."
+	)
+	@ApiResponses({
+	        @ApiResponse(
+	                responseCode = "204",
+	                description = "Order payment marked as pending successfully"
+	        ),
+	        @ApiResponse(
+	                responseCode = "404",
+	                description = "Order not found"
+	        )
+	})
+	@PutMapping("/payment-pending/{orderNumber}")
+	public ResponseEntity<Void> markPaymentPending(
+	        @Parameter(description = "Unique order number", example = "ORD-8A7F3D9B")
+	        @PathVariable String orderNumber) {
+	    orderService.markPaymentPending(orderNumber);
+	    return ResponseEntity.noContent().build();
+	}
 }

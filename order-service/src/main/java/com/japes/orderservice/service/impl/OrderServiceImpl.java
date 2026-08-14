@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.japes.orderservice.client.InventoryClient;
 import com.japes.orderservice.client.ProductClient;
@@ -196,6 +197,30 @@ public class OrderServiceImpl implements OrderService {
 		Order cancelledOrder = orderRepository.save(order);
 		log.info("Successfully cancelled order {}", orderNumber);
 		return mapToOrderResponse(cancelledOrder);
+	}
+	
+	@Override
+	@Transactional
+	public void markPaymentPending(String orderNumber) {
+		log.info("Marking order {} as PAYMENT_PENDING", orderNumber);
+
+	    Order order = orderRepository.findByOrderNumber(orderNumber).orElseThrow(() -> {
+	            log.warn("Order not found with order number {}", orderNumber);
+	            return new OrderNotFoundException("Order not found: " + orderNumber);
+	          });
+
+	    log.debug("Order {} current status: {}", orderNumber, order.getStatus());
+	    
+	    OrderStatus currentStatus = order.getStatus();
+		OrderStatus newStatus = OrderStatus.PAYMENT_PENDING;
+
+	    if (!isValidStatusTransition(currentStatus, newStatus)) {
+	    	log.warn("Invalid status transition from {} to {} for order {}", currentStatus, newStatus, orderNumber);
+	        throw new InvalidOrderStatusTransitionException("Cannot change order " + orderNumber + " from " + order.getStatus() + " to " + OrderStatus.PAYMENT_PENDING);
+	    }
+	    order.setStatus(OrderStatus.PAYMENT_PENDING);
+	    orderRepository.save(order);
+	    log.info("Order {} successfully changed from PENDING to PAYMENT_PENDING", orderNumber);	
 	}
 
 	private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
