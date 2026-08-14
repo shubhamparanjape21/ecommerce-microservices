@@ -222,6 +222,54 @@ public class OrderServiceImpl implements OrderService {
 	    orderRepository.save(order);
 	    log.info("Order {} successfully changed from PENDING to PAYMENT_PENDING", orderNumber);	
 	}
+	
+	@Override
+	@Transactional
+	public void handleSuccessfulPayment(String orderNumber) {
+	    log.info("Handling successful payment for order {}", orderNumber);
+
+	    Order order = orderRepository.findByOrderNumber(orderNumber).orElseThrow(() -> {
+	    	log.warn("Order not found with order number {}", orderNumber);
+	    	return new OrderNotFoundException("Order not found: " + orderNumber);
+	    });
+
+	    log.debug("Order {} found with current status {}", orderNumber, order.getStatus());
+ 
+	    if (order.getStatus() != OrderStatus.PAYMENT_PENDING) {
+	        log.warn("Cannot process successful payment for order {} because current status is {}", orderNumber, order.getStatus());
+	        throw new InvalidOrderStatusTransitionException("Order cannot be marked as PAID from status " + order.getStatus());
+	    }
+	    /*
+	     * PAYMENT_PENDING → PAID
+	     */
+	    if (!isValidStatusTransition(order.getStatus(), OrderStatus.PAID)) {
+	        throw new InvalidOrderStatusTransitionException("Invalid order status transition from " + order.getStatus() + " to " + OrderStatus.PAID);
+	    }
+	    order.setStatus(OrderStatus.PAID);
+
+	    log.info("Order {} payment confirmed. Status changed to PAID", orderNumber);
+
+	    /*
+	     * Now consume inventory for every order item.
+	     */
+	    for (OrderItem item : order.getOrderItems()) {
+	        log.info("Reducing inventory for order {}. SKU={}, quantity={}", orderNumber, item.getSkuCode(), item.getQuantity());
+
+	        inventoryClient.reduceInventory(item.getSkuCode(), item.getQuantity());
+	    }
+	    /*
+	     * All inventory reductions succeeded.
+	     *
+	     * PAID → PROCESSING
+	     */
+	    if (!isValidStatusTransition(order.getStatus(), OrderStatus.PROCESSING)) {
+	        throw new InvalidOrderStatusTransitionException("Invalid order status transition from " + order.getStatus() + " to " + OrderStatus.PROCESSING);
+	    }
+
+	    order.setStatus(OrderStatus.PROCESSING);
+	    orderRepository.save(order);
+	    log.info("Order {} processed successfully. Status changed to PROCESSING", orderNumber);
+	}
 
 	private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
 
@@ -241,5 +289,4 @@ public class OrderServiceImpl implements OrderService {
 		};
 
 	}
-
 }

@@ -12,4 +12,5 @@ public interface OrderService {
 	OrderResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest request);
 	OrderResponse cancelOrder(String orderNumber);
 	void markPaymentPending(String orderNumber);
+	void handleSuccessfulPayment(String orderNumber);
 }
