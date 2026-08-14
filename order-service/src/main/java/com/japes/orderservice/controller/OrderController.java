@@ -143,4 +143,40 @@ public class OrderController {
 	    orderService.markPaymentPending(orderNumber);
 	    return ResponseEntity.noContent().build();
 	}
+	
+	@Operation(
+	        summary = "Handle successful payment",
+	        description = "Marks the order as PAID after a successful payment, reduces inventory for all order items, and then moves the order to PROCESSING."
+	)
+	@ApiResponses({
+	        @ApiResponse(
+	                responseCode = "204",
+	                description = "Payment processed successfully and order moved to PROCESSING"
+	        ),
+	        @ApiResponse(
+	                responseCode = "404",
+	                description = "Order not found"
+	        ),
+	        @ApiResponse(
+	                responseCode = "409",
+	                description = "Invalid order status transition"
+	        ),
+	        @ApiResponse(
+	                responseCode = "400",
+	                description = "Invalid order number"
+	        )
+	})
+	@PutMapping("/payment-success/{orderNumber}")
+	public ResponseEntity<Void> handleSuccessfulPayment(
+	        @Parameter(
+	                description = "Unique order number",
+	                example = "ORD-20260814-1001",
+	                required = true
+	        )
+	        @PathVariable String orderNumber) {
+
+	    orderService.handleSuccessfulPayment(orderNumber);
+
+	    return ResponseEntity.noContent().build();
+	}
 }
