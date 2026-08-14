@@ -2,6 +2,8 @@ package com.japes.orderservice.dto;
 
 import java.util.List;
 
+import com.japes.orderservice.enums.PaymentMethod;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -22,4 +24,6 @@ public class CreateOrderRequest {
 	@NotEmpty(message = "Order must contain at least one item")
     @Valid
 	private List<OrderItemRequest> items;
+	@NotNull(message = "Payment method is required")
+	private PaymentMethod paymentMethod;
 }
