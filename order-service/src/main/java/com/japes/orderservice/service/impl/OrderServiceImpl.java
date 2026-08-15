@@ -119,7 +119,7 @@ public class OrderServiceImpl implements OrderService {
 	    log.info("Initiating payment {} for order {}", paymentResponse.getPaymentReference(), savedOrder.getOrderNumber());
 	    PaymentInitiationResponse initiationResponse = paymentClient.initiatePayment(paymentResponse.getPaymentReference());
 	    log.info("Payment {} initiated successfully with Razorpay order {}", initiationResponse.getPaymentReference(), initiationResponse.getRazorpayOrderId());
-		return mapToOrderResponse(savedOrder);
+	    return mapToOrderResponse(savedOrder);
 	}
 
 	private String generateOrderNumber() {
@@ -232,10 +232,18 @@ public class OrderServiceImpl implements OrderService {
 	    OrderStatus currentStatus = order.getStatus();
 		OrderStatus newStatus = OrderStatus.PAYMENT_PENDING;
 
-	    if (!isValidStatusTransition(currentStatus, newStatus)) {
-	    	log.warn("Invalid status transition from {} to {} for order {}", currentStatus, newStatus, orderNumber);
-	        throw new InvalidOrderStatusTransitionException("Cannot change order " + orderNumber + " from " + order.getStatus() + " to " + OrderStatus.PAYMENT_PENDING);
-	    }
+//	    if (!isValidStatusTransition(currentStatus, newStatus)) {
+//	    	log.warn("Invalid status transition from {} to {} for order {}", currentStatus, newStatus, orderNumber);
+//	        throw new InvalidOrderStatusTransitionException("Cannot change order " + orderNumber + " from " + order.getStatus() + " to " + OrderStatus.PAYMENT_PENDING);
+//	    }
+		// Idempotent check
+		if (currentStatus == newStatus) {
+		    log.info(
+		        "Order {} is already PAYMENT_PENDING. Skipping transition.",
+		        orderNumber
+		    );
+		    return;
+		}
 	    order.setStatus(OrderStatus.PAYMENT_PENDING);
 	    orderRepository.save(order);
 	    log.info("Order {} successfully changed from PENDING to PAYMENT_PENDING", orderNumber);	
