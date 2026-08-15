@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.japes.paymentservice.client.OrderClient;
 import com.japes.paymentservice.client.RazorpayPaymentClient;
@@ -238,6 +239,7 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
+	@Transactional
 	public PaymentInitiationResponse initiatePayment(String paymentReference) {
 		log.info("Received request to initiate payment for {}", paymentReference);
 
@@ -249,8 +251,26 @@ public class PaymentServiceImpl implements PaymentService {
 	            });
 
 	    log.debug("Payment found. reference={}, status={}, amount={}", payment.getPaymentReference(), payment.getPaymentStatus(), payment.getAmount());
+	    
+	    // Idempotency guard: if a Razorpay order already exists for this payment,
+	    // return it as-is instead of creating a duplicate order / re-triggering markPaymentPending.
+	    // This handles the case where initiate is called both internally (order creation)
+	    // and from the frontend (button click) for the same payment.
+	    if (payment.getRazorpayOrderId() != null) {
+	        log.info("Razorpay order already exists for payment {}. Returning existing order {} without re-initiating.",
+	                paymentReference, payment.getRazorpayOrderId());
 
-	    // Payment must be in PENDING state
+	        return new PaymentInitiationResponse(
+	                payment.getPaymentReference(),
+	                payment.getRazorpayOrderId(),
+	                payment.getAmount(),
+	                "INR",
+	                payment.getPaymentStatus().name(),
+	                razorpayKeyId
+	        );
+	    }
+
+	    // Payment must be in PENDING state to initiate for the first time
 	    if (payment.getPaymentStatus() != PaymentStatus.PENDING) {
 
 	        log.warn("Cannot initiate payment {} because current status is {}", paymentReference, payment.getPaymentStatus());
@@ -289,6 +309,7 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
+	@Transactional
 	public PaymentResponse verifyPayment(VerifyPaymentRequest request) {
 		log.info("Received request to verify Razorpay payment. orderId={}, paymentId={}", request.getRazorpayOrderId(), request.getRazorpayPaymentId());
 
@@ -314,6 +335,15 @@ public class PaymentServiceImpl implements PaymentService {
 
 	                    return new PaymentNotFoundException("Payment not found for Razorpay order ID: " + request.getRazorpayOrderId());
 	                });
+	        // Idempotency guard: the webhook is the source of truth for completing the order.
+	        // If it already marked this payment SUCCESS, don't redo the write here —
+	        // just return the current state. This also protects against /verify and the
+	        // webhook racing each other in either order.
+	        if (payment.getPaymentStatus() == PaymentStatus.SUCCESS) {
+	            log.info("Payment {} already SUCCESS (webhook likely processed it first). Returning current state without re-verifying.",
+	                    payment.getPaymentReference());
+	            return mapToPaymentResponse(payment);
+	        }
 
 	        payment.setTransactionId(request.getRazorpayPaymentId());
 	        payment.setPaymentStatus(PaymentStatus.SUCCESS);
