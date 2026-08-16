@@ -22,5 +22,6 @@
 .DS_Store
 
 # Logs
+*.html
 *.log
 logs/
