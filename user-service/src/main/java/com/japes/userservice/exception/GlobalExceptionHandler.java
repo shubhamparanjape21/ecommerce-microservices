@@ -1,26 +1,44 @@
 package com.japes.userservice.exception;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 	@ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ApiError> handleEmailAlreadyExists(
-            EmailAlreadyExistsException ex) {
-
-        ApiError error = new ApiError(
-                LocalDateTime.now(),
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+    public ResponseEntity<ApiError> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        ApiError error = new ApiError(LocalDateTime.now(), HttpStatus.CONFLICT.value(), ex.getMessage(), Collections.emptyMap());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
+	
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<ApiError> handleValidationException(MethodArgumentNotValidException ex) {
+		Map<String, String> errors = new HashMap<>();
+		for(FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
+			errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+		}
+		log.warn("Validation failed: {}", errors);
+		ApiError error = new ApiError(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage(), errors);
+		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ApiError> handleAllExceptions(Exception ex) {
+		Map<String, String> errors = new HashMap<>();
+		log.error("Unhandled exception occurred", ex);
+		ApiError error = new ApiError(LocalDateTime.now(), HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), errors);
+		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
 }
