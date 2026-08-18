@@ -1,6 +1,7 @@
 package com.japes.orderservice.exception;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,6 +11,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import feign.FeignException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -45,6 +48,12 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiError> handleInventoryNotFoundException(InvalidOrderStatusTransitionException ex) {
 		ApiError error = new ApiError(HttpStatus.CONFLICT.value(), ex.getMessage(), LocalDateTime.now());
 		return new ResponseEntity<ApiError>(error, HttpStatus.CONFLICT);
+	}
+	
+	@ExceptionHandler(FeignException.NotFound.class)
+	public ResponseEntity<ApiError> handleFeignNotFound(FeignException.NotFound ex) {
+	    ApiError error = new ApiError(HttpStatus.NOT_FOUND.value(), "User not found", LocalDateTime.now(),Collections.emptyMap());
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
 	}
 	
 	@ExceptionHandler(Exception.class)

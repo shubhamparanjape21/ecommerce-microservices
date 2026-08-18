@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.japes.orderservice.client.InventoryClient;
 import com.japes.orderservice.client.PaymentClient;
 import com.japes.orderservice.client.ProductClient;
+import com.japes.orderservice.client.UserClient;
 import com.japes.orderservice.dto.CreateOrderRequest;
 import com.japes.orderservice.dto.OrderItemResponse;
 import com.japes.orderservice.dto.OrderPageResponse;
@@ -24,6 +25,7 @@ import com.japes.orderservice.dto.client.InventoryResponse;
 import com.japes.orderservice.dto.client.PaymentInitiationResponse;
 import com.japes.orderservice.dto.client.PaymentResponse;
 import com.japes.orderservice.dto.client.ProductVariantResponse;
+import com.japes.orderservice.dto.client.UserResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
@@ -46,10 +48,16 @@ public class OrderServiceImpl implements OrderService {
 	private final ProductClient productClient;
 	private final InventoryClient inventoryClient;
 	private final PaymentClient paymentClient;
+	private final UserClient userClient;
 
 	@Override
 	public OrderResponse placeOrder(CreateOrderRequest request) {
 		log.info("Received request to place order for user {}", request.getUserId());
+		
+		log.debug("Validating user {}", request.getUserId());
+	    UserResponse user = userClient.getUserById(request.getUserId());
+
+	    log.info("User {} validated successfully", user.getId());
 
 		Order order = new Order();
 		order.setOrderNumber(generateOrderNumber());
