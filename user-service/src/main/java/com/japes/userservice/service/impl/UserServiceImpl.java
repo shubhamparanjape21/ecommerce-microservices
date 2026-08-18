@@ -9,6 +9,7 @@ import com.japes.userservice.dto.CreateUserRequest;
 import com.japes.userservice.dto.UserResponse;
 import com.japes.userservice.entity.User;
 import com.japes.userservice.exception.EmailAlreadyExistsException;
+import com.japes.userservice.exception.UserNotFoundException;
 import com.japes.userservice.repository.UserRepository;
 import com.japes.userservice.service.UserService;
 
@@ -56,6 +57,21 @@ public class UserServiceImpl implements UserService {
         log.info("User created successfully. User ID: {}", savedUser.getId());
 
         return mapToUserResponse(savedUser);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public UserResponse getUserById(Long id) {
+		log.info("Fetching user with ID: {}", id);
+		
+		User savedUser = userRepository.findById(id)
+				.orElseThrow(() -> {
+					log.warn("User not found with ID: {}", id);
+					return new UserNotFoundException("User with " + id + " not found");
+				});
+		
+		return mapToUserResponse(savedUser);
+		
 	}
 
 }

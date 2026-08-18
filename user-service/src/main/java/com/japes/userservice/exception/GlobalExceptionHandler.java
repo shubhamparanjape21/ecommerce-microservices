@@ -34,6 +34,12 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 	
+	@ExceptionHandler(UserNotFoundException.class)
+	public ResponseEntity<ApiError> handleUserNotFoundException(UserNotFoundException ex) {
+		ApiError error = new ApiError(LocalDateTime.now(), HttpStatus.NOT_FOUND.value(), ex.getMessage(), Collections.emptyMap());
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+	}
+	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiError> handleAllExceptions(Exception ex) {
 		Map<String, String> errors = new HashMap<>();
