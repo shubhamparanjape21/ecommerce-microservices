@@ -44,16 +44,16 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<ApiError>(error, HttpStatus.BAD_REQUEST);
 	}
 	
+	@ExceptionHandler(UserNotFoundException.class)
+	public ResponseEntity<ApiError> handleUserNotFound(UserNotFoundException ex) {
+		ApiError error = new ApiError(HttpStatus.NOT_FOUND.value(), ex.getMessage(), LocalDateTime.now());
+	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+	}
+	
 	@ExceptionHandler(InvalidOrderStatusTransitionException.class)
 	public ResponseEntity<ApiError> handleInventoryNotFoundException(InvalidOrderStatusTransitionException ex) {
 		ApiError error = new ApiError(HttpStatus.CONFLICT.value(), ex.getMessage(), LocalDateTime.now());
 		return new ResponseEntity<ApiError>(error, HttpStatus.CONFLICT);
-	}
-	
-	@ExceptionHandler(FeignException.NotFound.class)
-	public ResponseEntity<ApiError> handleFeignNotFound(FeignException.NotFound ex) {
-	    ApiError error = new ApiError(HttpStatus.NOT_FOUND.value(), "User not found", LocalDateTime.now(),Collections.emptyMap());
-	    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
 	}
 	
 	@ExceptionHandler(Exception.class)

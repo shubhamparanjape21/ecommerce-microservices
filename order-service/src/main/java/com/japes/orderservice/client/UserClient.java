@@ -4,9 +4,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import com.japes.orderservice.config.UserFeignConfig;
 import com.japes.orderservice.dto.client.UserResponse;
 
-@FeignClient(name = "user-service")
+@FeignClient(name = "user-service", configuration = UserFeignConfig.class)
 public interface UserClient {
 	@GetMapping("/api/v1/users/{id}")
 	UserResponse getUserById(@PathVariable Long id);
