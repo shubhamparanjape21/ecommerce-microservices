@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.userservice.dto.CreateUserRequest;
 import com.japes.userservice.dto.LoginRequest;
+import com.japes.userservice.dto.LoginResponse;
 import com.japes.userservice.dto.UserResponse;
 import com.japes.userservice.service.UserService;
 
@@ -87,8 +88,8 @@ public class UserController {
             )
     })
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request) {
-        UserResponse response = userService.login(request);
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = userService.login(request);
         return ResponseEntity.ok(response);
     }
 }

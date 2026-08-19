@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.japes.userservice.dto.CreateUserRequest;
 import com.japes.userservice.dto.LoginRequest;
+import com.japes.userservice.dto.LoginResponse;
 import com.japes.userservice.dto.UserResponse;
 import com.japes.userservice.entity.User;
 import com.japes.userservice.exception.EmailAlreadyExistsException;
@@ -79,7 +80,8 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserResponse login(LoginRequest request) {
+	@Transactional(readOnly = true)
+	public LoginResponse login(LoginRequest request) {
 		log.info("Login attempt for email: {}", request.getEmail());
 		
 		User user = userRepository.findByEmail(request.getEmail())
@@ -94,6 +96,6 @@ public class UserServiceImpl implements UserService {
 		log.info("User logged in successfully. User ID: {}", user.getId());
 		// Generate token
 		String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
-		return mapToUserResponse(user);
+		return new LoginResponse(token, user.getId(), user.getName(), user.getEmail(), user.getRole().name());
 	}
 }
