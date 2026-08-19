@@ -13,6 +13,7 @@ import com.japes.userservice.exception.EmailAlreadyExistsException;
 import com.japes.userservice.exception.InvalidCredentialsException;
 import com.japes.userservice.exception.UserNotFoundException;
 import com.japes.userservice.repository.UserRepository;
+import com.japes.userservice.security.JwtService;
 import com.japes.userservice.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class UserServiceImpl implements UserService {
 	
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final JwtService jwtService;
 	
 	private UserResponse mapToUserResponse(User user) {
 
@@ -90,6 +92,8 @@ public class UserServiceImpl implements UserService {
 	        throw new InvalidCredentialsException("Invalid email or password");
 		}
 		log.info("User logged in successfully. User ID: {}", user.getId());
+		// Generate token
+		String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getRole().name());
 		return mapToUserResponse(user);
 	}
 }
