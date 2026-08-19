@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.japes.userservice.dto.CreateUserRequest;
+import com.japes.userservice.dto.LoginRequest;
 import com.japes.userservice.dto.UserResponse;
 import com.japes.userservice.entity.User;
 import com.japes.userservice.exception.EmailAlreadyExistsException;
+import com.japes.userservice.exception.InvalidCredentialsException;
 import com.japes.userservice.exception.UserNotFoundException;
 import com.japes.userservice.repository.UserRepository;
 import com.japes.userservice.service.UserService;
@@ -74,4 +76,20 @@ public class UserServiceImpl implements UserService {
 		
 	}
 
+	@Override
+	public UserResponse login(LoginRequest request) {
+		log.info("Login attempt for email: {}", request.getEmail());
+		
+		User user = userRepository.findByEmail(request.getEmail())
+				.orElseThrow(() -> {
+					log.warn("Login failed. User not found for email: {}", request.getEmail());
+					return new InvalidCredentialsException("Invalid email or password");
+				});
+		if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+			log.warn("Login failed. Invalid password for email: {}", request.getEmail());
+	        throw new InvalidCredentialsException("Invalid email or password");
+		}
+		log.info("User logged in successfully. User ID: {}", user.getId());
+		return mapToUserResponse(user);
+	}
 }

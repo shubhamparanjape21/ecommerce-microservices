@@ -40,6 +40,12 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
 	}
 	
+	@ExceptionHandler(InvalidCredentialsException.class)
+	public ResponseEntity<ApiError> handleInvalidCredentialsException(InvalidCredentialsException ex) {
+		ApiError error = new ApiError(LocalDateTime.now(), HttpStatus.UNAUTHORIZED.value(), ex.getMessage(), Collections.emptyMap());
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+	}
+	
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiError> handleAllExceptions(Exception ex) {
 		Map<String, String> errors = new HashMap<>();

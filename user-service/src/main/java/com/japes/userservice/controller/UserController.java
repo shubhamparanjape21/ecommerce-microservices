@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.japes.userservice.dto.CreateUserRequest;
+import com.japes.userservice.dto.LoginRequest;
 import com.japes.userservice.dto.UserResponse;
 import com.japes.userservice.service.UserService;
 
@@ -69,5 +70,25 @@ public class UserController {
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
     	UserResponse response = userService.getUserById(id);
     	return ResponseEntity.ok(response);
+    }
+    
+    @Operation(
+            summary = "User login",
+            description = "Authenticates user using email and password"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Login successful"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Invalid credentials"
+            )
+    })
+    @PostMapping("/login")
+    public ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request) {
+        UserResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
     }
 }
