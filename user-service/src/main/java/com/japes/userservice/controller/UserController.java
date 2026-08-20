@@ -2,6 +2,7 @@ package com.japes.userservice.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,7 +48,7 @@ public class UserController {
             description = "Email already registered"
         )
     })
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserResponse response = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -91,5 +92,20 @@ public class UserController {
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = userService.login(request);
         return ResponseEntity.ok(response);
+    }
+    
+    @Operation(
+            summary = "Admin test endpoint",
+            description = "Endpoint accessible only to administrators"
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Admin access granted"
+    )
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/test")
+    public ResponseEntity<String> adminTest() {
+
+        return ResponseEntity.ok("Admin access granted");
     }
 }
