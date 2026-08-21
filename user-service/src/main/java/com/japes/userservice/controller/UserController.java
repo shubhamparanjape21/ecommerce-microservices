@@ -68,6 +68,7 @@ public class UserController {
                     description = "User not found"
             )
     })
+    @PreAuthorize("@userSecurity.isOwnerOrAdmin(#id, authentication)")
     @GetMapping("/{id}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
     	UserResponse response = userService.getUserById(id);

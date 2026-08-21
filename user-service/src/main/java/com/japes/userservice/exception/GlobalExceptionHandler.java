@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -52,5 +53,11 @@ public class GlobalExceptionHandler {
 		log.error("Unhandled exception occurred", ex);
 		ApiError error = new ApiError(LocalDateTime.now(), HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), errors);
 		return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
+	    ApiError error = new ApiError(LocalDateTime.now(), HttpStatus.FORBIDDEN.value(), "Access denied", Map.of());
+	    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
 	}
 }
