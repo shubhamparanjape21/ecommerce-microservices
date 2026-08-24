@@ -8,6 +8,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
@@ -53,8 +54,16 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
+                        
+                        // Product - GET allowed for USER and ADMIN
+                        .pathMatchers(HttpMethod.GET, "/api/v1/products/**").hasAnyRole("USER","ADMIN")
+                        
+                        // Product - ADMIN only
+                        .pathMatchers(HttpMethod.POST, "/api/v1/products/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("ADMIN")
 
-                        // Everything else requires JWT
+                        // Everything else requires JWT authentication
                         .anyExchange()
                         .authenticated()
                 )
