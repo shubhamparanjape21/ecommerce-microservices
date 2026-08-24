@@ -75,6 +75,9 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.PUT, "/api/v1/product-variants/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.DELETE, "/api/v1/product-variants/**").hasRole("ADMIN")
 
+                        // Product-Variants
+                        .pathMatchers("/api/v1/inventory/**").hasRole("ADMIN")
+                        
                         // Everything else requires JWT authentication
                         .anyExchange()
                         .authenticated()
