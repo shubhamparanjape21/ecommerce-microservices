@@ -62,6 +62,18 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/v1/products/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("ADMIN")
+                        
+                        // Category
+                        .pathMatchers(HttpMethod.GET, "/api/v1/categories/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/categories/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/v1/categories/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/v1/categories/**").hasRole("ADMIN")
+                        
+                        // Product-Variants
+                        .pathMatchers(HttpMethod.GET, "/api/v1/product-variants/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/product-variants/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/v1/product-variants/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.DELETE, "/api/v1/product-variants/**").hasRole("ADMIN")
 
                         // Everything else requires JWT authentication
                         .anyExchange()
