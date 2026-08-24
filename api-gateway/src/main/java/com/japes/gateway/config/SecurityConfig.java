@@ -14,6 +14,8 @@ import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
+import com.japes.gateway.security.JwtAuthenticationConverter;
+
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
@@ -35,7 +37,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
-            ServerHttpSecurity http) {
+            ServerHttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter) {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -58,7 +61,11 @@ public class SecurityConfig {
 
                 // JWT Bearer token authentication
                 .oauth2ResourceServer(
-                        oauth2 -> oauth2.jwt(jwt -> {})
+                        oauth2 -> oauth2.jwt(jwt -> jwt
+                        		.jwtAuthenticationConverter(
+                        				jwtAuthenticationConverter
+                        				)
+                        		)
                 )
 
                 .build();
