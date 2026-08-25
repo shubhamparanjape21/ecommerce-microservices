@@ -99,6 +99,11 @@ public class SecurityConfig {
                         // Razorpay webhook
                         .pathMatchers("/api/v1/payments/webhook").permitAll()
                         
+                        // User
+                        .pathMatchers("/api/v1/users/register").permitAll()
+                        .pathMatchers("/api/v1/users/login").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/v1/users/admin/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/users/**").hasAnyRole("USER", "ADMIN")
                         
                         // Everything else requires JWT authentication
                         .anyExchange()
