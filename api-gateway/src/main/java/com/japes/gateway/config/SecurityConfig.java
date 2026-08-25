@@ -75,7 +75,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.PUT, "/api/v1/product-variants/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.DELETE, "/api/v1/product-variants/**").hasRole("ADMIN")
 
-                        // Product-Variants
+                        // Inventory
                         .pathMatchers("/api/v1/inventory/**").hasRole("ADMIN")
                         
                         // Order
@@ -83,6 +83,22 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/v1/orders/**").hasAnyRole("USER","ADMIN")
                         .pathMatchers(HttpMethod.PATCH, "/api/v1/orders/cancel/**").hasAnyRole("USER","ADMIN")
                         .pathMatchers(HttpMethod.PUT, "/api/v1/orders/status/**").hasRole("ADMIN")
+                        
+                        // Payment - User + Admin
+                        .pathMatchers(HttpMethod.GET, "/api/v1/payments/reference/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/payments/order/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/payments/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/payments/initiate/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/payments/verify/**").hasAnyRole("USER","ADMIN")
+                        
+                        // Payment - Admin
+                        .pathMatchers(HttpMethod.GET, "/api/v1/payments/status/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PATCH, "/api/v1/payments/status/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PATCH, "/api/v1/payments/refund/**").hasRole("ADMIN")
+                        
+                        // Razorpay webhook
+                        .pathMatchers("/api/v1/payments/webhook").permitAll()
+                        
                         
                         // Everything else requires JWT authentication
                         .anyExchange()
