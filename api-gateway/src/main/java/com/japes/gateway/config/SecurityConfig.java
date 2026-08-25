@@ -78,6 +78,12 @@ public class SecurityConfig {
                         // Product-Variants
                         .pathMatchers("/api/v1/inventory/**").hasRole("ADMIN")
                         
+                        // Order
+                        .pathMatchers(HttpMethod.GET, "/api/v1/orders/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/orders/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.PATCH, "/api/v1/orders/cancel/**").hasAnyRole("USER","ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/v1/orders/status/**").hasRole("ADMIN")
+                        
                         // Everything else requires JWT authentication
                         .anyExchange()
                         .authenticated()
