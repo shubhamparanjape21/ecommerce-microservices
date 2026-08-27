@@ -6,9 +6,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.japes.orderservice.config.FeignConfig;
 import com.japes.orderservice.dto.client.InventoryResponse;
 
-@FeignClient(name = "inventory-service")
+@FeignClient(name = "inventory-service",configuration = FeignConfig.class)
 public interface InventoryClient {
 	@GetMapping("/api/v1/inventory/sku/{skuCode}")
 	public InventoryResponse getInventoryBySkuCode(@PathVariable("skuCode") String skuCode);
