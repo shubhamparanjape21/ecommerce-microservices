@@ -6,6 +6,7 @@ import com.japes.orderservice.client.PaymentClient;
 import com.japes.orderservice.dto.client.CreatePaymentRequest;
 import com.japes.orderservice.dto.client.PaymentInitiationResponse;
 import com.japes.orderservice.dto.client.PaymentResponse;
+import com.japes.orderservice.exception.PaymentServiceUnavailableException;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class PaymentClientService {
 
 		log.error("Payment Service unavailable for order {}", request.getOrderNumber(), ex);
 
-		throw new RuntimeException("Payment Service is currently unavailable. Please try again later.");
+		throw new PaymentServiceUnavailableException("Payment Service is currently unavailable. Please try again later.");
 	}
 
 	@CircuitBreaker(name = "paymentService", fallbackMethod = "initiatePaymentFallback")
@@ -44,7 +45,7 @@ public class PaymentClientService {
 
 		log.error("Payment Service unavailable while initiating payment {}", paymentReference, ex);
 
-		throw new RuntimeException("Payment Service is currently unavailable. Please try again later.");
+		throw new PaymentServiceUnavailableException("Payment Service is currently unavailable. Please try again later.");
 	}
 
 }
