@@ -127,7 +127,7 @@ public class OrderServiceImpl implements OrderService {
 	    // Initiate Razorpay payment automatically
 
 	    log.info("Initiating payment {} for order {}", paymentResponse.getPaymentReference(), savedOrder.getOrderNumber());
-	    PaymentInitiationResponse initiationResponse = paymentClient.initiatePayment(paymentResponse.getPaymentReference());
+	    PaymentInitiationResponse initiationResponse = paymentClientService.initiatePayment(paymentResponse.getPaymentReference());
 	    log.info("Payment {} initiated successfully with Razorpay order {}", initiationResponse.getPaymentReference(), initiationResponse.getRazorpayOrderId());
 	    return mapToOrderResponse(savedOrder);
 	}

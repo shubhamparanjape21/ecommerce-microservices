@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.japes.orderservice.client.PaymentClient;
 import com.japes.orderservice.dto.client.CreatePaymentRequest;
+import com.japes.orderservice.dto.client.PaymentInitiationResponse;
 import com.japes.orderservice.dto.client.PaymentResponse;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -16,33 +17,34 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentClientService {
 	private final PaymentClient paymentClient;
 
-    @CircuitBreaker(
-        name = "paymentService",
-        fallbackMethod = "createPaymentFallback"
-    )
-    public PaymentResponse createPayment(CreatePaymentRequest request) {
+	@CircuitBreaker(name = "paymentService", fallbackMethod = "createPaymentFallback")
+	public PaymentResponse createPayment(CreatePaymentRequest request) {
 
-        log.info(
-            "Calling Payment Service to create payment for order {}",
-            request.getOrderNumber()
-        );
+		log.info("Calling Payment Service to create payment for order {}", request.getOrderNumber());
 
-        return paymentClient.createPayment(request);
-    }
+		return paymentClient.createPayment(request);
+	}
 
-    public PaymentResponse createPaymentFallback(
-            CreatePaymentRequest request,
-            Throwable ex) {
+	public PaymentResponse createPaymentFallback(CreatePaymentRequest request, Throwable ex) {
 
-        log.error(
-            "Payment Service unavailable for order {}",
-            request.getOrderNumber(),
-            ex
-        );
+		log.error("Payment Service unavailable for order {}", request.getOrderNumber(), ex);
 
-        throw new RuntimeException(
-            "Payment Service is currently unavailable. Please try again later."
-        );
-    }
+		throw new RuntimeException("Payment Service is currently unavailable. Please try again later.");
+	}
+
+	@CircuitBreaker(name = "paymentService", fallbackMethod = "initiatePaymentFallback")
+	public PaymentInitiationResponse initiatePayment(String paymentReference) {
+
+		log.info("Calling Payment Service to initiate payment {}", paymentReference);
+
+		return paymentClient.initiatePayment(paymentReference);
+	}
+
+	public PaymentInitiationResponse initiatePaymentFallback(String paymentReference, Throwable ex) {
+
+		log.error("Payment Service unavailable while initiating payment {}", paymentReference, ex);
+
+		throw new RuntimeException("Payment Service is currently unavailable. Please try again later.");
+	}
 
 }
