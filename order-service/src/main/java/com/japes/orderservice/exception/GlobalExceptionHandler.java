@@ -61,4 +61,13 @@ public class GlobalExceptionHandler {
 		ApiError error = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage(), LocalDateTime.now());
 		return new ResponseEntity<ApiError>(error, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
+	
+	@ExceptionHandler(PaymentServiceUnavailableException.class)
+	public ResponseEntity<ApiError> handlePaymentServiceUnavailable(PaymentServiceUnavailableException ex) {
+	    ApiError error = new ApiError();
+	    error.setMessage(ex.getMessage());
+	    error.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
+	    error.setTimestamp(LocalDateTime.now());
+	    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
+	}
 }
