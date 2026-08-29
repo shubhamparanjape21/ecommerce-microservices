@@ -36,6 +36,7 @@ import com.japes.orderservice.exception.OrderNotFoundException;
 import com.japes.orderservice.exception.ProductVariantInactiveException;
 import com.japes.orderservice.repository.OrderRepository;
 import com.japes.orderservice.service.OrderService;
+import com.japes.orderservice.service.PaymentClientService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,7 @@ public class OrderServiceImpl implements OrderService {
 	private final InventoryClient inventoryClient;
 	private final PaymentClient paymentClient;
 	private final UserClient userClient;
+	private final PaymentClientService paymentClientService;
 
 	@Override
 	public OrderResponse placeOrder(CreateOrderRequest request) {
@@ -119,7 +121,7 @@ public class OrderServiceImpl implements OrderService {
 
 	    CreatePaymentRequest paymentRequest = new CreatePaymentRequest(savedOrder.getOrderNumber(), savedOrder.getTotalAmount(), request.getPaymentMethod());
 	    log.info("Creating payment for order {} using payment method {}", savedOrder.getOrderNumber(), request.getPaymentMethod());
-	    PaymentResponse paymentResponse = paymentClient.createPayment(paymentRequest);
+	    PaymentResponse paymentResponse = paymentClientService.createPayment(paymentRequest);
 	    log.info("Payment {} created successfully for order {}", paymentResponse.getPaymentReference(), savedOrder.getOrderNumber());
 
 	    // Initiate Razorpay payment automatically
