@@ -33,6 +33,12 @@ public class KafkaProducerConfig {
                 ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                 JsonSerializer.class
         );
+        
+        config.put(
+                JsonSerializer.TYPE_MAPPINGS,
+                "orderCreated:com.japes.orderservice.event.OrderCreatedEvent"
+        );
+        
         return new DefaultKafkaProducerFactory<>(config);
     }
 
