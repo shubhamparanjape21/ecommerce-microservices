@@ -29,12 +29,15 @@ import com.japes.orderservice.dto.client.UserResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
+import com.japes.orderservice.event.OrderCreatedEvent;
+import com.japes.orderservice.event.OrderItemEvent;
 import com.japes.orderservice.exception.InsufficientInventoryException;
 import com.japes.orderservice.exception.InvalidOrderStatusTransitionException;
 import com.japes.orderservice.exception.OrderAlreadyDeliveredException;
 import com.japes.orderservice.exception.OrderNotFoundException;
 import com.japes.orderservice.exception.ProductVariantInactiveException;
 import com.japes.orderservice.repository.OrderRepository;
+import com.japes.orderservice.service.KafkaEventPublisher;
 import com.japes.orderservice.service.OrderService;
 import com.japes.orderservice.service.PaymentClientService;
 
@@ -51,6 +54,7 @@ public class OrderServiceImpl implements OrderService {
 	private final PaymentClient paymentClient;
 	private final UserClient userClient;
 	private final PaymentClientService paymentClientService;
+	private final KafkaEventPublisher kafkaEventPublisher;
 
 	@Override
 	public OrderResponse placeOrder(CreateOrderRequest request) {
@@ -116,6 +120,17 @@ public class OrderServiceImpl implements OrderService {
 		log.debug("Saving order to database");
 		Order savedOrder = orderRepository.save(order);
 		log.info("Successfully placed order {}", savedOrder.getOrderNumber());
+		List<OrderItemEvent> itemEvents = savedOrder.getOrderItems()
+				.stream()
+				.map(item -> new OrderItemEvent(
+						item.getSkuCode(),
+						item.getQuantity(),
+						item.getUnitPrice(),
+						item.getSubTotal()
+						)).toList();
+		OrderCreatedEvent event = new OrderCreatedEvent(savedOrder.getOrderNumber(), savedOrder.getUserId(), savedOrder.getTotalAmount(), itemEvents);
+		// Publish event
+		kafkaEventPublisher.publishOrderCreated(event);
 		
 	    // Create payment automatically
 

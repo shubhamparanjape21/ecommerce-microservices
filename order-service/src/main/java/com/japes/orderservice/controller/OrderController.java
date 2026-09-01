@@ -1,5 +1,8 @@
 package com.japes.orderservice.controller;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +19,9 @@ import com.japes.orderservice.dto.CreateOrderRequest;
 import com.japes.orderservice.dto.OrderPageResponse;
 import com.japes.orderservice.dto.OrderResponse;
 import com.japes.orderservice.dto.UpdateOrderStatusRequest;
+import com.japes.orderservice.event.OrderCreatedEvent;
+import com.japes.orderservice.event.OrderItemEvent;
+import com.japes.orderservice.service.KafkaEventPublisher;
 import com.japes.orderservice.service.OrderService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,6 +46,29 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Order Controller", description = "APIs for managing customer orders")
 public class OrderController {
 	private final OrderService orderService;
+	private final KafkaEventPublisher kafkaEventPublisher;
+	
+	@GetMapping("/test-kafka")
+	public ResponseEntity<String> testKafka() {
+
+	    OrderCreatedEvent event = new OrderCreatedEvent(
+	            "TEST-ORDER-001",
+	            1L,
+	            BigDecimal.valueOf(1000),
+	            List.of(
+	                    new OrderItemEvent(
+	                            "TEST-SKU",
+	                            2,
+	                            BigDecimal.valueOf(500),
+	                            BigDecimal.valueOf(1000)
+	                    )
+	            )
+	    );
+
+	    kafkaEventPublisher.publishOrderCreated(event);
+
+	    return ResponseEntity.ok("Event published successfully");
+	}
 	
 	@Operation(summary = "Place a new order", description = "Creates a new order for a user with one or more order items.")
     @ApiResponses(value = {
