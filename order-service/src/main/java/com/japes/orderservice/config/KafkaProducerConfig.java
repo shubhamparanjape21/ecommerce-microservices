@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
 @Configuration
@@ -30,9 +31,14 @@ public class KafkaProducerConfig {
         );
 
         config.put(
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                JsonSerializer.class
-        );
+        	    ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+        	    JacksonJsonSerializer.class
+        	);
+        
+        config.put(
+        	    "spring.json.add.type.headers",
+        	    false
+        	);
         
         return new DefaultKafkaProducerFactory<>(config);
     }
