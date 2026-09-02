@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class InventoryEventConsumer {
 	private final InventoryService inventoryService;
+	private final InventoryEventProducer inventoryEventProducer;
 
     @KafkaListener(
         topics = "order-created",
@@ -43,5 +44,7 @@ public class InventoryEventConsumer {
             "Inventory successfully reserved for order {}",
             event.orderNumber()
         );
+        
+        inventoryEventProducer.publishInventoryReserved(event.orderNumber());
     }
 }
