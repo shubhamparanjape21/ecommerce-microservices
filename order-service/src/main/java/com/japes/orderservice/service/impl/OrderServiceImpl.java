@@ -306,7 +306,7 @@ public class OrderServiceImpl implements OrderService {
 	    for (OrderItem item : order.getOrderItems()) {
 	        log.info("Reducing inventory for order {}. SKU={}, quantity={}", orderNumber, item.getSkuCode(), item.getQuantity());
 
-	        inventoryClient.reduceInventory(item.getSkuCode(), item.getQuantity());
+	        //inventoryClient.reduceInventory(item.getSkuCode(), item.getQuantity());
 	    }
 	    /*
 	     * All inventory reductions succeeded.
