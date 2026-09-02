@@ -297,22 +297,25 @@ public class OrderServiceImpl implements OrderService {
 	        throw new InvalidOrderStatusTransitionException("Invalid order status transition from " + order.getStatus() + " to " + OrderStatus.PAID);
 	    }
 	    order.setStatus(OrderStatus.PAID);
+	    orderRepository.save(order);
 
 	    log.info("Order {} payment confirmed. Status changed to PAID", orderNumber);
 
 	    /*
 	     * Now consume inventory for every order item.
-	     */
+	     
 	    for (OrderItem item : order.getOrderItems()) {
 	        log.info("Reducing inventory for order {}. SKU={}, quantity={}", orderNumber, item.getSkuCode(), item.getQuantity());
 
+	        // Synchronous flow 
 	        //inventoryClient.reduceInventory(item.getSkuCode(), item.getQuantity());
 	    }
+	    */
 	    /*
 	     * All inventory reductions succeeded.
 	     *
 	     * PAID → PROCESSING
-	     */
+	     
 	    if (!isValidStatusTransition(order.getStatus(), OrderStatus.PROCESSING)) {
 	        throw new InvalidOrderStatusTransitionException("Invalid order status transition from " + order.getStatus() + " to " + OrderStatus.PROCESSING);
 	    }
@@ -320,6 +323,7 @@ public class OrderServiceImpl implements OrderService {
 	    order.setStatus(OrderStatus.PROCESSING);
 	    orderRepository.save(order);
 	    log.info("Order {} processed successfully. Status changed to PROCESSING", orderNumber);
+	    */
 	}
 
 	private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
