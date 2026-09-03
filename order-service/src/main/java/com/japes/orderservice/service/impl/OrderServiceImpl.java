@@ -471,6 +471,80 @@ public class OrderServiceImpl implements OrderService {
 	    }
 	    orderRepository.save(order);
 	}
+	
+	@Override
+	@Transactional
+	public void handleFailedPayment(String orderNumber) {
+
+	    log.info(
+	        "Handling failed payment for order {}",
+	        orderNumber
+	    );
+
+	    Order order = orderRepository
+	            .findByOrderNumber(orderNumber)
+	            .orElseThrow(() -> {
+
+	                log.warn(
+	                    "Order not found with order number {}",
+	                    orderNumber
+	                );
+
+	                return new OrderNotFoundException(
+	                    "Order not found: " + orderNumber
+	                );
+	            });
+
+	    log.debug(
+	        "Order {} found with current status {} and inventoryReserved={}",
+	        orderNumber,
+	        order.getStatus(),
+	        order.isInventoryReserved()
+	    );
+
+	    /*
+	     * Payment can fail only while payment is pending.
+	     */
+	    if (order.getStatus() != OrderStatus.PAYMENT_PENDING) {
+
+	        log.warn(
+	            "Cannot process failed payment for order {} because current status is {}",
+	            orderNumber,
+	            order.getStatus()
+	        );
+
+	        throw new InvalidOrderStatusTransitionException(
+	            "Order cannot be cancelled due to payment failure from status "
+	            + order.getStatus()
+	        );
+	    }
+
+	    /*
+	     * PAYMENT_PENDING → CANCELLED
+	     */
+	    if (!isValidStatusTransition(
+	            order.getStatus(),
+	            OrderStatus.CANCELLED)) {
+
+	        throw new InvalidOrderStatusTransitionException(
+	            "Invalid order status transition from "
+	            + order.getStatus()
+	            + " to "
+	            + OrderStatus.CANCELLED
+	        );
+	    }
+
+	    order.setStatus(OrderStatus.CANCELLED);
+
+	    orderRepository.save(order);
+
+	    log.info(
+	        "Payment failed for order {}. Status changed to CANCELLED. "
+	        + "inventoryReserved={}",
+	        orderNumber,
+	        order.isInventoryReserved()
+	    );
+	}
 
 	private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
 

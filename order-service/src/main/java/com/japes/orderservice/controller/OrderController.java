@@ -215,4 +215,18 @@ public class OrderController {
 
 	    return ResponseEntity.noContent().build();
 	}
+	
+	@PutMapping("/payment-failed/{orderNumber}")
+	public ResponseEntity<Void> handleFailedPayment(
+	        @Parameter(
+	                description = "Unique order number",
+	                example = "ORD-20260814-1001",
+	                required = true
+	        )
+	        @PathVariable String orderNumber) {
+
+	    orderService.handleFailedPayment(orderNumber);
+
+	    return ResponseEntity.ok().build();
+	}
 }

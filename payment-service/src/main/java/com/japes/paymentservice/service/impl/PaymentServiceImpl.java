@@ -404,6 +404,7 @@ public class PaymentServiceImpl implements PaymentService {
 	            payment.setPaymentStatus(PaymentStatus.FAILED);
 	            paymentRepository.save(payment);
 	            log.info("Payment {} failed for order {}", payment.getPaymentReference(), payment.getOrderNumber());
+	            orderClient.handleFailedPayment(payment.getOrderNumber());
 	        }
 	        
 	        log.info("Payment updated successfully through Razorpay webhook. reference={}, status={}", payment.getPaymentReference(), payment.getPaymentStatus());

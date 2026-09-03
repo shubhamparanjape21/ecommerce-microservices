@@ -12,4 +12,7 @@ public interface OrderClient {
 	@PutMapping("/api/v1/orders/payment-success/{orderNumber}")
 	void handleSuccessfulPayment(@PathVariable String orderNumber);
 	
+	@PutMapping("/api/v1/orders/payment-failed/{orderNumber}")
+	void handleFailedPayment(@PathVariable String orderNumber);
+	
 }
