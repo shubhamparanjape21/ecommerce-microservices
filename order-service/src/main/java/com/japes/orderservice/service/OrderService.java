@@ -13,4 +13,5 @@ public interface OrderService {
 	OrderResponse cancelOrder(String orderNumber);
 	void markPaymentPending(String orderNumber);
 	void handleSuccessfulPayment(String orderNumber);
+	void handleInventoryReserved(String orderNumber);
 }

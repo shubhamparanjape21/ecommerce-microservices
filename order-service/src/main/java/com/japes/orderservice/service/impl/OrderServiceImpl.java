@@ -284,8 +284,11 @@ public class OrderServiceImpl implements OrderService {
 	    	return new OrderNotFoundException("Order not found: " + orderNumber);
 	    });
 
-	    log.debug("Order {} found with current status {}", orderNumber, order.getStatus());
+	    log.debug("Order {} found with current status {} and inventoryReserved={}", orderNumber, order.getStatus(), order.isInventoryReserved());
  
+	    /*
+	     * Payment must be pending before marking it successful.
+	     */
 	    if (order.getStatus() != OrderStatus.PAYMENT_PENDING) {
 	        log.warn("Cannot process successful payment for order {} because current status is {}", orderNumber, order.getStatus());
 	        throw new InvalidOrderStatusTransitionException("Order cannot be marked as PAID from status " + order.getStatus());
@@ -297,9 +300,45 @@ public class OrderServiceImpl implements OrderService {
 	        throw new InvalidOrderStatusTransitionException("Invalid order status transition from " + order.getStatus() + " to " + OrderStatus.PAID);
 	    }
 	    order.setStatus(OrderStatus.PAID);
+	    /*
+	     * If inventory was already reserved,
+	     * both Saga steps are now complete.
+	     *
+	     * PAID → PROCESSING
+	     */
+	    if (order.isInventoryReserved()) {
+
+	        if (!isValidStatusTransition(
+	                order.getStatus(),
+	                OrderStatus.PROCESSING)) {
+
+	            throw new InvalidOrderStatusTransitionException(
+	                "Invalid order status transition from "
+	                + order.getStatus()
+	                + " to "
+	                + OrderStatus.PROCESSING
+	            );
+	        }
+
+	        order.setStatus(OrderStatus.PROCESSING);
+
+	        log.info(
+	            "Payment successful and inventory already reserved for order {}. "
+	            + "Status changed directly to PROCESSING",
+	            orderNumber
+	        );
+
+	    } else {
+
+	        log.info(
+	            "Payment successful for order {}. "
+	            + "Status changed to PAID. Waiting for inventory reservation.",
+	            orderNumber
+	        );
+	    }
 	    orderRepository.save(order);
 
-	    log.info("Order {} payment confirmed. Status changed to PAID", orderNumber);
+	    //log.info("Order {} payment confirmed. Status changed to PAID", orderNumber);
 
 	    /*
 	     * Now consume inventory for every order item.
@@ -324,6 +363,113 @@ public class OrderServiceImpl implements OrderService {
 	    orderRepository.save(order);
 	    log.info("Order {} processed successfully. Status changed to PROCESSING", orderNumber);
 	    */
+	}
+	
+	@Override
+	@Transactional
+	public void handleInventoryReserved(String orderNumber) {
+
+	    log.info(
+	        "Handling inventory reserved event for order {}",
+	        orderNumber
+	    );
+
+	    Order order = orderRepository
+	            .findByOrderNumber(orderNumber)
+	            .orElseThrow(() -> {
+
+	                log.warn(
+	                    "Order not found with order number {}",
+	                    orderNumber
+	                );
+
+	                return new OrderNotFoundException(
+	                    "Order not found: " + orderNumber
+	                );
+	            });
+
+	    log.debug(
+	        "Order {} found with current status {}",
+	        orderNumber,
+	        order.getStatus()
+	    );
+	    
+	    /*
+	     * Idempotency:
+	     * If inventory was already reserved, ignore duplicate event.
+	     */
+	    if (order.isInventoryReserved()) {
+
+	        log.info(
+	            "Inventory already reserved for order {}. Ignoring duplicate event.",
+	            orderNumber
+	        );
+
+	        return;
+	    }
+
+	    /*
+	     * Record that inventory has been reserved.
+	     */
+	    order.setInventoryReserved(true);
+
+	    /*
+	     *  Case 1:
+	     * Payment is already successful.
+	     *
+	     * PAID → PROCESSING
+	     */
+	    if (order.getStatus() == OrderStatus.PAID) {
+	    	
+	    	if (!isValidStatusTransition(
+	                order.getStatus(),
+	                OrderStatus.PROCESSING)) {
+
+	            throw new InvalidOrderStatusTransitionException(
+	                "Invalid order status transition from "
+	                + order.getStatus()
+	                + " to "
+	                + OrderStatus.PROCESSING
+	            );
+	        }
+
+	        order.setStatus(OrderStatus.PROCESSING);
+
+	        log.info(
+	            "Payment already successful and inventory reserved for order {}. "
+	            + "Status changed to PROCESSING",
+	            orderNumber
+	        );
+	    } 
+	    /*
+	     * Case 2:
+	     * Payment has not completed yet.
+	     *
+	     * Just remember that inventory is reserved.
+	     * Payment event will complete the transition later.
+	     */
+	    else if (order.getStatus() == OrderStatus.PAYMENT_PENDING) {
+
+	        log.info(
+	            "Inventory reserved for order {} but payment is still pending. "
+	            + "Waiting for payment confirmation.",
+	            orderNumber
+	        );
+	    }
+
+	    /*
+	     * Unexpected state.
+	     */
+	    else {
+
+	        throw new InvalidOrderStatusTransitionException(
+	            "Cannot process inventory reservation for order "
+	            + orderNumber
+	            + " from status "
+	            + order.getStatus()
+	        );
+	    }
+	    orderRepository.save(order);
 	}
 
 	private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
