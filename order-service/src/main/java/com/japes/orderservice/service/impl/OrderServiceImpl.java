@@ -29,6 +29,7 @@ import com.japes.orderservice.dto.client.UserResponse;
 import com.japes.orderservice.entity.Order;
 import com.japes.orderservice.entity.OrderItem;
 import com.japes.orderservice.enums.OrderStatus;
+import com.japes.orderservice.event.InventoryEventProducer;
 import com.japes.orderservice.event.OrderCreatedEvent;
 import com.japes.orderservice.event.OrderItemEvent;
 import com.japes.orderservice.exception.InsufficientInventoryException;
@@ -55,6 +56,7 @@ public class OrderServiceImpl implements OrderService {
 	private final UserClient userClient;
 	private final PaymentClientService paymentClientService;
 	private final KafkaEventPublisher kafkaEventPublisher;
+	private final InventoryEventProducer inventoryEventProducer;
 
 	@Override
 	public OrderResponse placeOrder(CreateOrderRequest request) {
@@ -544,6 +546,35 @@ public class OrderServiceImpl implements OrderService {
 	        orderNumber,
 	        order.isInventoryReserved()
 	    );
+	    
+	    /*
+	     * Compensation:
+	     * If inventory was already reserved,
+	     * request Inventory Service to release it.
+	     */
+	    if (order.isInventoryReserved()) {
+
+	        log.info(
+	            "Inventory was already reserved for order {}. "
+	            + "Requesting inventory release.",
+	            orderNumber
+	        );
+
+	        List<OrderItemEvent> items = order.getOrderItems()
+	                .stream()
+	                .map(item -> new OrderItemEvent(
+	                        item.getSkuCode(),
+	                        item.getQuantity(),
+	                        item.getUnitPrice(),
+	                        item.getSubTotal()
+	                ))
+	                .toList();
+
+	        inventoryEventProducer.publishInventoryReleaseRequested(
+	                orderNumber,
+	                items
+	        );
+	    }
 	}
 
 	private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
