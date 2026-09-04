@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.japes.inventoryservice.dto.CreateInventoryRequest;
 import com.japes.inventoryservice.dto.InventoryPageResponse;
@@ -152,5 +153,35 @@ public class InventoryServiceImpl implements InventoryService {
 	    inventory.setQuantity(inventory.getQuantity() - quantity);
 	    inventoryRepository.save(inventory);
 	    log.info("Inventory successfully reduced for SKU {}. Remaining quantity: {}", skuCode, inventory.getQuantity());
+	}
+	
+	@Override
+	@Transactional
+	public void releaseInventory(String skuCode, int quantity) {
+
+	    log.info(
+	        "Releasing inventory. SKU={}, quantity={}",
+	        skuCode,
+	        quantity
+	    );
+
+	    Inventory inventory = inventoryRepository
+	            .findBySkuCode(skuCode)
+	            .orElseThrow(() -> new InventoryNotFoundException(
+	                    "Inventory not found for SKU: " + skuCode
+	            ));
+
+	    inventory.setQuantity(
+	            inventory.getQuantity() + quantity
+	    );
+
+	    inventoryRepository.save(inventory);
+
+	    log.info(
+	        "Inventory released successfully. SKU={}, releasedQuantity={}, newQuantity={}",
+	        skuCode,
+	        quantity,
+	        inventory.getQuantity()
+	    );
 	}
 }
