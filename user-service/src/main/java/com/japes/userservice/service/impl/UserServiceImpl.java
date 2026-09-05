@@ -10,6 +10,8 @@ import com.japes.userservice.dto.LoginRequest;
 import com.japes.userservice.dto.LoginResponse;
 import com.japes.userservice.dto.UserResponse;
 import com.japes.userservice.entity.User;
+import com.japes.userservice.event.UserRegisteredEvent;
+import com.japes.userservice.event.producer.UserEventProducer;
 import com.japes.userservice.exception.EmailAlreadyExistsException;
 import com.japes.userservice.exception.InvalidCredentialsException;
 import com.japes.userservice.exception.UserNotFoundException;
@@ -28,6 +30,7 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtService jwtService;
+	private final UserEventProducer userEventProducer;
 	
 	private UserResponse mapToUserResponse(User user) {
 
@@ -58,6 +61,9 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User savedUser = userRepository.save(user);
+        
+        UserRegisteredEvent event = new UserRegisteredEvent(savedUser.getId(), savedUser.getName(), savedUser.getEmail());
+        userEventProducer.publishUserRegistered(event);
 
         log.info("User created successfully. User ID: {}", savedUser.getId());
 
