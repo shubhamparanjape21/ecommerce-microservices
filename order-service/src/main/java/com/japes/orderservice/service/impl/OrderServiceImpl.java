@@ -344,20 +344,6 @@ public class OrderServiceImpl implements OrderService {
 	    }
 	    orderRepository.save(order);
 	    
-	    log.info(
-	    	    "Fetching user {} from User Service for order {}",
-	    	    order.getUserId(),
-	    	    orderNumber
-	    	);
-	    
-	    UserResponse user = userClient.getUserById(order.getUserId());
-	    
-	    log.info(
-	    	    "User fetched successfully. User ID={}, email={}",
-	    	    user.getId(),
-	    	    user.getEmail()
-	    	);
-	    
 	    List<OrderPaidEvent.OrderPaidItem> items = order.getOrderItems()
 	    		.stream()
 	    		.map(item -> new OrderPaidEvent.OrderPaidItem(
@@ -367,7 +353,7 @@ public class OrderServiceImpl implements OrderService {
 	    				item.getSubTotal()
 	    		)).toList();
 	    
-	    OrderPaidEvent event = new OrderPaidEvent(order.getOrderNumber(), user.getEmail(), items, order.getTotalAmount(), "SUCCESS");
+	    OrderPaidEvent event = new OrderPaidEvent(order.getOrderNumber(), order.getEmail(), items, order.getTotalAmount(), "SUCCESS");
 	    
 	    orderEventProducer.publishOrderPaid(event);
 
