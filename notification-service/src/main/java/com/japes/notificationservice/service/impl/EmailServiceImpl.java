@@ -4,6 +4,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import com.japes.notificationservice.event.OrderPaidEvent;
 import com.japes.notificationservice.service.EmailService;
 
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,12 @@ public class EmailServiceImpl implements EmailService {
 
         log.info("Welcome email sent successfully to {}", email);
 
+	}
+
+	@Override
+	public void sendOrderConfirmationEmail(OrderPaidEvent event) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
