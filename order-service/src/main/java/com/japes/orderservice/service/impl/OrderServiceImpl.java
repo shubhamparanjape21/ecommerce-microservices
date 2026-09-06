@@ -355,6 +355,8 @@ public class OrderServiceImpl implements OrderService {
 	    		)).toList();
 	    
 	    OrderPaidEvent event = new OrderPaidEvent(order.getOrderNumber(), user.getEmail(), items, order.getTotalAmount(), "SUCCESS");
+	    
+	    orderEventProducer.publishOrderPaid(event);
 
 	    //log.info("Order {} payment confirmed. Status changed to PAID", orderNumber);
 
