@@ -1,5 +1,7 @@
 package com.japes.orderservice.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,9 +17,19 @@ import jakarta.servlet.http.HttpServletRequest;
 @Configuration
 public class UserFeignConfig {
 	
+	private static final Logger log =
+	        LoggerFactory.getLogger(UserFeignConfig.class);
+	
 	@Bean
 	public ErrorDecoder userErrorDecoder() {
 		return (methodKey, response) -> {
+			log.error(
+		            "User Service Feign call failed. method={}, status={}, reason={}",
+		            methodKey,
+		            response.status(),
+		            response.reason()
+		        );
+
 			if(response.status() == 404) {
 				return new UserNotFoundException("User not found");
 			}

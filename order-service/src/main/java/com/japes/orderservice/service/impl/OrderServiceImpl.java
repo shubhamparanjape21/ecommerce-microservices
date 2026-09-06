@@ -343,7 +343,19 @@ public class OrderServiceImpl implements OrderService {
 	    }
 	    orderRepository.save(order);
 	    
+	    log.info(
+	    	    "Fetching user {} from User Service for order {}",
+	    	    order.getUserId(),
+	    	    orderNumber
+	    	);
+	    
 	    UserResponse user = userClient.getUserById(order.getUserId());
+	    
+	    log.info(
+	    	    "User fetched successfully. User ID={}, email={}",
+	    	    user.getId(),
+	    	    user.getEmail()
+	    	);
 	    
 	    List<OrderPaidEvent.OrderPaidItem> items = order.getOrderItems()
 	    		.stream()
