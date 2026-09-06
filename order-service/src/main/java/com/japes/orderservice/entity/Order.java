@@ -41,4 +41,5 @@ public class Order extends BaseModel{
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItem> orderItems;
 	private boolean inventoryReserved = false;
+	private String email;
 }
