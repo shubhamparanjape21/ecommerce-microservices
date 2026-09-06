@@ -1,0 +1,8 @@
+package com.japes.orderservice.event;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public record OrderPaidEvent(String orderNumber, String email, List<OrderPaidItem> items, BigDecimal totalAmount, String paymentStatus) {
+
+}
