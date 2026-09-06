@@ -22,5 +22,6 @@ public class OrderPaidEventConsumer {
 	            event.orderNumber(),
 	            event.email()
 	        );
+		emailService.sendOrderConfirmationEmail(event);
 	}
 }

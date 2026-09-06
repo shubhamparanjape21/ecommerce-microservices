@@ -38,7 +38,68 @@ public class EmailServiceImpl implements EmailService {
 
 	@Override
 	public void sendOrderConfirmationEmail(OrderPaidEvent event) {
-		// TODO Auto-generated method stub
+		log.info(
+	            "Sending order confirmation email for order {} to {}",
+	            event.orderNumber(),
+	            event.email()
+	    );
+
+	    SimpleMailMessage message = new SimpleMailMessage();
+
+	    message.setTo(event.email());
+	    message.setSubject("Order Confirmed - " + event.orderNumber());
+
+	    StringBuilder emailBody = new StringBuilder();
+
+	    emailBody.append("Hi,\n\n");
+	    emailBody.append("Your payment was successful and your order has been confirmed.\n\n");
+
+	    emailBody.append("Order Number: ")
+	             .append(event.orderNumber())
+	             .append("\n");
+
+	    emailBody.append("Payment Status: ")
+	             .append(event.paymentStatus())
+	             .append("\n\n");
+
+	    emailBody.append("Order Details:\n");
+	    emailBody.append("--------------------------------\n");
+
+	    for (OrderPaidEvent.OrderPaidItem item : event.items()) {
+
+	        emailBody.append("SKU: ")
+	                 .append(item.skuCode())
+	                 .append("\n");
+
+	        emailBody.append("Quantity: ")
+	                 .append(item.quantity())
+	                 .append("\n");
+
+	        emailBody.append("Unit Price: ₹")
+	                 .append(item.unitPrice())
+	                 .append("\n");
+
+	        emailBody.append("Subtotal: ₹")
+	                 .append(item.subTotal())
+	                 .append("\n");
+
+	        emailBody.append("--------------------------------\n");
+	    }
+
+	    emailBody.append("Total Amount: ₹")
+	             .append(event.totalAmount())
+	             .append("\n\n");
+
+	    emailBody.append("Thank you for your order!\n");
+
+	    message.setText(emailBody.toString());
+
+	    mailSender.send(message);
+
+	    log.info(
+	            "Order confirmation email sent successfully for order {}",
+	            event.orderNumber()
+	    );
 		
 	}
 
