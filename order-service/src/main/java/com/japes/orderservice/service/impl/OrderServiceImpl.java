@@ -73,6 +73,7 @@ public class OrderServiceImpl implements OrderService {
 		Order order = new Order();
 		order.setOrderNumber(generateOrderNumber());
 		order.setUserId(request.getUserId());
+		order.setEmail(user.getEmail());
 		order.setStatus(OrderStatus.PENDING);
 
 		log.debug("Mapping order items");
