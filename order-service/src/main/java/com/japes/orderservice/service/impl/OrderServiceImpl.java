@@ -32,6 +32,8 @@ import com.japes.orderservice.enums.OrderStatus;
 import com.japes.orderservice.event.InventoryEventProducer;
 import com.japes.orderservice.event.OrderCreatedEvent;
 import com.japes.orderservice.event.OrderItemEvent;
+import com.japes.orderservice.event.OrderPaidEvent;
+import com.japes.orderservice.event.producer.OrderEventProducer;
 import com.japes.orderservice.exception.InsufficientInventoryException;
 import com.japes.orderservice.exception.InvalidOrderStatusTransitionException;
 import com.japes.orderservice.exception.OrderAlreadyDeliveredException;
@@ -57,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
 	private final PaymentClientService paymentClientService;
 	private final KafkaEventPublisher kafkaEventPublisher;
 	private final InventoryEventProducer inventoryEventProducer;
+	private final OrderEventProducer orderEventProducer;
 
 	@Override
 	public OrderResponse placeOrder(CreateOrderRequest request) {
@@ -339,6 +342,19 @@ public class OrderServiceImpl implements OrderService {
 	        );
 	    }
 	    orderRepository.save(order);
+	    
+	    UserResponse user = userClient.getUserById(order.getUserId());
+	    
+	    List<OrderPaidEvent.OrderPaidItem> items = order.getOrderItems()
+	    		.stream()
+	    		.map(item -> new OrderPaidEvent.OrderPaidItem(
+	    				item.getSkuCode(),
+	    				item.getQuantity(),
+	    				item.getUnitPrice(),
+	    				item.getSubTotal()
+	    		)).toList();
+	    
+	    OrderPaidEvent event = new OrderPaidEvent(order.getOrderNumber(), user.getEmail(), items, order.getTotalAmount(), "SUCCESS");
 
 	    //log.info("Order {} payment confirmed. Status changed to PAID", orderNumber);
 
