@@ -24,6 +24,8 @@ public class OrderItem extends BaseModel{
 	@JoinColumn(name = "order_id", nullable = false)
 	private Order order;
 	@Column(nullable = false)
+    private String productName;
+	@Column(nullable = false)
 	private String skuCode; // SKU received from product service
 	@Column(nullable = false)
 	private Integer quantity; // Quantity ordered
