@@ -5,7 +5,7 @@ import java.util.List;
 
 public record OrderPaidEvent(String orderNumber, String email, List<OrderPaidItem> items, BigDecimal totalAmount,
 		String paymentStatus) {
-	public record OrderPaidItem(String skuCode, Integer quantity, BigDecimal unitPrice, BigDecimal subTotal) {
+	public record OrderPaidItem(String productName, Integer quantity, BigDecimal unitPrice, BigDecimal subTotal) {
 
 	}
 }

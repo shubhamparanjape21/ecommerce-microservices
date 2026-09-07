@@ -349,7 +349,7 @@ public class OrderServiceImpl implements OrderService {
 	    List<OrderPaidEvent.OrderPaidItem> items = order.getOrderItems()
 	    		.stream()
 	    		.map(item -> new OrderPaidEvent.OrderPaidItem(
-	    				item.getSkuCode(),
+	    				item.getProductName(),
 	    				item.getQuantity(),
 	    				item.getUnitPrice(),
 	    				item.getSubTotal()
