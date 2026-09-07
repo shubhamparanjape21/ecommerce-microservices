@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderPaidEventConsumer {
 	private final EmailService emailService;
 	
-	@KafkaListener(topics = "order-paid", groupId = "notification-service-v1")
+	@KafkaListener(topics = "order-paid", groupId = "notification-service-v1",properties = {"spring.json.value.default.type=com.japes.notificationservice.event.OrderPaidEvent"})
 	public void consumeOrderPaid(OrderPaidEvent event) {
 		log.info(
 	            "Received OrderPaidEvent for order {} with email {}",

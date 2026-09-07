@@ -18,7 +18,8 @@ public class UserRegisteredEventConsumer {
 	
 	@KafkaListener(
 	        topics = "user-registered",
-	        groupId = "notification-service-v1"
+	        groupId = "notification-service-v1",
+	        properties = {"spring.json.value.default.type=com.japes.notificationservice.event.UserRegisteredEvent"}
 	    )
 	    public void consumeUserRegistered(UserRegisteredEvent event) {
 

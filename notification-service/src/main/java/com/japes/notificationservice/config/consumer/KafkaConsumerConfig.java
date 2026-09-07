@@ -41,10 +41,10 @@ public class KafkaConsumerConfig {
             JacksonJsonDeserializer.class
         );
 
-        config.put(
-            "spring.json.value.default.type",
-            UserRegisteredEvent.class
-        );
+//        config.put(
+//            "spring.json.value.default.type",
+//            UserRegisteredEvent.class
+//        );
 
         config.put(
             "spring.json.trusted.packages",
