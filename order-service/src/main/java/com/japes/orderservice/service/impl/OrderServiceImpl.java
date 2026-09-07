@@ -83,6 +83,7 @@ public class OrderServiceImpl implements OrderService {
 			item.setQuantity(itemRequest.getQuantity());
 			log.debug("Fetching product variant details for SKU {}", itemRequest.getSkuCode());
 			ProductVariantResponse productVariant = productClient.getProductVariantBySkuCode(itemRequest.getSkuCode());
+			item.setProductName(productVariant.getProductName());
 			log.debug("Validating whether product variant {} is active", itemRequest.getSkuCode());
 			if(!productVariant.isActive()) {
 				log.warn("Product variant {} is inactive", itemRequest.getSkuCode());

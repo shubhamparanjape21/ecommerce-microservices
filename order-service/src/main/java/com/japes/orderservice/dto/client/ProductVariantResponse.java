@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 public class ProductVariantResponse {
 	private String skuCode;
+	private String productName;
 	private BigDecimal price;
 	private boolean active;
 }
