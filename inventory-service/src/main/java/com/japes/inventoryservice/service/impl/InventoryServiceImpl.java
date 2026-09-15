@@ -137,21 +137,31 @@ public class InventoryServiceImpl implements InventoryService {
 	}
 
 	@Override
+	@Transactional
 	public void reduceInventory(String skuCode, int quantity) {
 		log.info("Reducing inventory for SKU {} by {}", skuCode, quantity);
 
 	    Inventory inventory = inventoryRepository.findBySkuCode(skuCode)
 	            .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for SKU " + skuCode));
 
-	    log.debug("Current inventory for SKU {} is {}", skuCode, inventory.getQuantity());
-
-	    if (inventory.getQuantity() < quantity) {
-	        log.warn("Insufficient inventory for SKU {}. Available: {}, Requested: {}", skuCode, inventory.getQuantity(), quantity);
-
+	    // Atomic conditional UPDATE: the check (quantity >= :quantity) and the
+	    // write happen in one SQL statement, so there's no window between
+	    // "read the quantity" and "write the new quantity" for a concurrent
+	    // request to sneak into. Two simultaneous calls for the last unit can
+	    // no longer both succeed - the database serializes the two UPDATEs.
+	    int updatedRows = inventoryRepository.reduceStock(skuCode, quantity);
+ 
+	    if (updatedRows == 0) {
+	        // 0 rows means either the SKU doesn't exist, or it exists but
+	        // doesn't have enough stock - tell those apart for a clear error.
+	        if (!inventoryRepository.existsBySkuCode(skuCode)) {
+	            log.warn("Inventory not found for SKU {}", skuCode);
+	            throw new InventoryNotFoundException("Inventory not found for SKU " + skuCode);
+	        }
+	        log.warn("Insufficient inventory for SKU {}. Requested: {}", skuCode, quantity);
 	        throw new InsufficientInventoryException("Insufficient inventory for SKU " + skuCode);
 	    }
-	    inventory.setQuantity(inventory.getQuantity() - quantity);
-	    inventoryRepository.save(inventory);
+	    
 	    log.info("Inventory successfully reduced for SKU {}. Remaining quantity: {}", skuCode, inventory.getQuantity());
 	}
 	
@@ -171,12 +181,15 @@ public class InventoryServiceImpl implements InventoryService {
 	                    "Inventory not found for SKU: " + skuCode
 	            ));
 
-	    inventory.setQuantity(
-	            inventory.getQuantity() + quantity
-	    );
-
-	    inventoryRepository.save(inventory);
-
+	    // Same atomic-update approach as reduceInventory - avoids a lost
+	    // update if two release events for the same SKU land at once.
+	    int updatedRows = inventoryRepository.increaseStock(skuCode, quantity);
+ 
+	    if (updatedRows == 0) {
+	        log.warn("Inventory not found for SKU {}", skuCode);
+	        throw new InventoryNotFoundException("Inventory not found for SKU: " + skuCode);
+	    }
+ 
 	    log.info(
 	        "Inventory released successfully. SKU={}, releasedQuantity={}, newQuantity={}",
 	        skuCode,
