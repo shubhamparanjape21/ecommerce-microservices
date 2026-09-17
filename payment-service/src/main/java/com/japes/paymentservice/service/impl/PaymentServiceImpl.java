@@ -328,6 +328,14 @@ public class PaymentServiceImpl implements PaymentService {
 	        }
 
 	        log.info("Razorpay payment signature verified successfully for orderId={}", request.getRazorpayOrderId());
+	        
+	        // /verify is now read-only. It only confirms the payment object the
+	        // frontend has is genuine (signature check above) — it never flips
+	        // payment status or notifies order-service. The webhook is the only
+	        // writer, because it's the only signal that's actually coming from
+	        // Razorpay's servers rather than the customer's browser. What we
+	        // return here may still be PENDING if the webhook hasn't landed yet;
+	        // that's expected, and it's why the frontend polls afterward.
 
 	        Payment payment = paymentRepository.findByRazorpayOrderId(request.getRazorpayOrderId())
 	                .orElseThrow(() -> {
@@ -335,26 +343,10 @@ public class PaymentServiceImpl implements PaymentService {
 
 	                    return new PaymentNotFoundException("Payment not found for Razorpay order ID: " + request.getRazorpayOrderId());
 	                });
-	        // Idempotency guard: the webhook is the source of truth for completing the order.
-	        // If it already marked this payment SUCCESS, don't redo the write here —
-	        // just return the current state. This also protects against /verify and the
-	        // webhook racing each other in either order.
-	        if (payment.getPaymentStatus() == PaymentStatus.SUCCESS) {
-	            log.info("Payment {} already SUCCESS (webhook likely processed it first). Returning current state without re-verifying.",
-	                    payment.getPaymentReference());
-	            return mapToPaymentResponse(payment);
-	        }
+	        log.info("Signature confirmed genuine for orderId={}. Current payment status={} (webhook is authoritative).",
+	                request.getRazorpayOrderId(), payment.getPaymentStatus());
 
-	        payment.setTransactionId(request.getRazorpayPaymentId());
-	        payment.setPaymentStatus(PaymentStatus.SUCCESS);
-	        Payment savedPayment = paymentRepository.save(payment);
-
-	        log.info("Payment verified and updated successfully. paymentReference={}, transactionId={}, status={}",
-	                savedPayment.getPaymentReference(),
-	                savedPayment.getTransactionId(),
-	                savedPayment.getPaymentStatus());
-
-	        return mapToPaymentResponse(savedPayment);
+	        return mapToPaymentResponse(payment);
 
 	    } catch (RazorpayException ex) {
 	        log.error("Razorpay payment verification failed for orderId={}", request.getRazorpayOrderId(), ex);
@@ -363,6 +355,7 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
+	@Transactional
 	public void handleWebhook(String payload, String signature) {
 		log.info("Received Razorpay webhook");
 	    try {
@@ -393,21 +386,37 @@ public class PaymentServiceImpl implements PaymentService {
 	        Payment payment = paymentRepository.findByRazorpayOrderId(razorpayOrderId)
 	                .orElseThrow(() -> new PaymentNotFoundException("Payment not found for Razorpay order ID: " + razorpayOrderId));
 
-	        payment.setTransactionId(razorpayPaymentId);
-
-	        if ("payment.captured".equals(event)) {
-	            payment.setPaymentStatus(PaymentStatus.SUCCESS);
-	            paymentRepository.save(payment);
+	        PaymentStatus newStatus = "payment.captured".equals(event) ? PaymentStatus.SUCCESS : PaymentStatus.FAILED;
+	        
+	        // The webhook is now the ONLY writer of payment status, so the only race
+	        // left to guard against is Razorpay delivering the SAME webhook twice
+	        // (its documented retry-on-failure behavior). The conditional UPDATE
+	        // (WHERE paymentStatus = PENDING) makes the write atomic: if two
+	        // deliveries somehow overlap, only the first one actually updates a row.
+	        int updatedRows = paymentRepository.updateStatusIfCurrentStatus(
+	                razorpayOrderId, PaymentStatus.PENDING, newStatus, razorpayPaymentId);
+ 
+	        if (updatedRows == 0) {
+	            // Either a duplicate delivery of this webhook, or the payment was
+	            // already resolved some other way. Either way, we did NOT just win
+	            // the write, so we must NOT re-notify order-service — that already
+	            // happened on the delivery that did win.
+	            log.info("Payment {} was not in PENDING status when webhook arrived (already processed — likely a duplicate delivery). Skipping order-service notification.",
+	                    payment.getPaymentReference());
+	            return;
+	        }
+ 
+	        log.info("Payment {} updated to {} via webhook (won the write).", payment.getPaymentReference(), newStatus);
+ 
+	        if (newStatus == PaymentStatus.SUCCESS) {
 	            log.info("Payment {} successful. Notifying Order Service for order {}", payment.getPaymentReference(), payment.getOrderNumber());
 	            orderClient.handleSuccessfulPayment(payment.getOrderNumber());
 	        } else {
-	            payment.setPaymentStatus(PaymentStatus.FAILED);
-	            paymentRepository.save(payment);
 	            log.info("Payment {} failed for order {}", payment.getPaymentReference(), payment.getOrderNumber());
 	            orderClient.handleFailedPayment(payment.getOrderNumber());
 	        }
-	        
-	        log.info("Payment updated successfully through Razorpay webhook. reference={}, status={}", payment.getPaymentReference(), payment.getPaymentStatus());
+ 
+	        log.info("Payment updated successfully through Razorpay webhook. reference={}, status={}", payment.getPaymentReference(), newStatus);
 	        
 	    } catch (RazorpayException ex) {
 	        log.error("Razorpay webhook signature verification failed", ex);
