@@ -1,5 +1,7 @@
 package com.japes.paymentservice.repository;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -30,4 +32,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 			@Param("expectedStatus") PaymentStatus expectedStatus,
 			@Param("newStatus") PaymentStatus newStatus,
 			@Param("transactionId") String transactionId);
+	
+	// Used by the reconciliation job: payments that have a Razorpay order
+	// (so checkout was actually opened) but have sat in PENDING past the
+	// cutoff - i.e. the webhook should have arrived by now and didn't.
+	List<Payment> findByPaymentStatusAndRazorpayOrderIdIsNotNullAndUpdatedAtBefore(
+			PaymentStatus status, LocalDateTime cutoff);
 }

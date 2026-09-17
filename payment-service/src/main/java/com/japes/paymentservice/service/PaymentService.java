@@ -18,4 +18,5 @@ public interface PaymentService {
 	public PaymentInitiationResponse initiatePayment(String paymentReference);
 	public PaymentResponse verifyPayment(VerifyPaymentRequest request);
 	public void handleWebhook(String payload, String signature);
+	public void reconcilePendingPayments();
 }

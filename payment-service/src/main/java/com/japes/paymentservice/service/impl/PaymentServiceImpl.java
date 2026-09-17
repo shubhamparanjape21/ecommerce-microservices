@@ -1,5 +1,6 @@
 package com.japes.paymentservice.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,6 +54,12 @@ public class PaymentServiceImpl implements PaymentService {
 	
 	@Value("${razorpay.webhook-secret}")
 	private String razorpayWebhookSecret;
+	
+	// How long a payment can sit in PENDING (with a Razorpay order already
+	// created) before we treat the webhook as "didn't arrive" and go ask
+	// Razorpay directly instead of waiting passively.
+	@Value("${payment.reconciliation.stuck-after-minutes:5}")
+	private int stuckAfterMinutes;
 	
 	private String generatePaymentReference() {
 		return "PAY-" + UUID.randomUUID()
@@ -423,5 +430,97 @@ public class PaymentServiceImpl implements PaymentService {
 	        throw new PaymentVerificationException("Unable to verify Razorpay webhook");
 	    }
 		
+	}
+	
+	@Override
+	public void reconcilePendingPayments() {
+ 
+		LocalDateTime cutoff = LocalDateTime.now().minusMinutes(stuckAfterMinutes);
+ 
+		List<Payment> stuckPayments = paymentRepository
+				.findByPaymentStatusAndRazorpayOrderIdIsNotNullAndUpdatedAtBefore(PaymentStatus.PENDING, cutoff);
+ 
+		if (stuckPayments.isEmpty()) {
+			log.debug("Reconciliation: no payments stuck in PENDING past {} minutes.", stuckAfterMinutes);
+			return;
+		}
+ 
+		log.info("Reconciliation: found {} payment(s) stuck in PENDING past {} minutes. Checking Razorpay directly.",
+				stuckPayments.size(), stuckAfterMinutes);
+ 
+		for (Payment payment : stuckPayments) {
+			reconcileOne(payment);
+		}
+	}
+ 
+	// This is the self-heal path for when the webhook never arrives at all -
+	// tunnel down, our endpoint down, Razorpay's delivery lost. Instead of
+	// waiting passively forever, we ask Razorpay directly what actually
+	// happened to this order and catch the payment up to reality.
+	private void reconcileOne(Payment payment) {
+ 
+		try {
+			List<com.razorpay.Payment> razorpayPayments =
+					razorpayPaymentClient.fetchPaymentsForOrder(payment.getRazorpayOrderId());
+ 
+			// An order can have more than one payment attempt (customer's card
+			// declined, they retried with UPI). We only care about the one that
+			// actually captured money, if any.
+			com.razorpay.Payment captured = razorpayPayments.stream()
+					.filter(p -> "captured".equals(p.get("status")))
+					.findFirst()
+					.orElse(null);
+ 
+			if (captured != null) {
+				applyResolvedStatus(payment, PaymentStatus.SUCCESS, captured.get("id"));
+				return;
+			}
+ 
+			boolean anyStillInFlight = razorpayPayments.stream()
+					.anyMatch(p -> "created".equals(p.get("status")) || "authorized".equals(p.get("status")));
+ 
+			if (anyStillInFlight || razorpayPayments.isEmpty()) {
+				// Razorpay hasn't resolved it either - leave it PENDING. The
+				// webhook, or next reconciliation run, may still catch it.
+				log.debug("Reconciliation: payment {} still unresolved on Razorpay's side. Leaving as PENDING.",
+						payment.getPaymentReference());
+				return;
+			}
+ 
+			// Every attempt Razorpay has on record for this order failed.
+			String lastAttemptId = razorpayPayments.get(razorpayPayments.size() - 1).get("id");
+			applyResolvedStatus(payment, PaymentStatus.FAILED, lastAttemptId);
+ 
+		} catch (RazorpayException ex) {
+			log.error("Reconciliation: failed to query Razorpay for payment {} (razorpayOrderId={}). Will retry on next run.",
+					payment.getPaymentReference(), payment.getRazorpayOrderId(), ex);
+			// Leave it PENDING - next scheduled run retries. Never guess.
+		}
+	}
+ 
+	private void applyResolvedStatus(Payment payment, PaymentStatus resolvedStatus, String razorpayPaymentId) {
+ 
+		// Same atomic conditional update the webhook uses. If the webhook (or a
+		// previous reconciliation pass) wrote this status in the gap between our
+		// SELECT and this UPDATE, this returns 0 and we correctly do nothing
+		// further - whoever wrote it first already ran the order-service
+		// notification.
+		int updatedRows = paymentRepository.updateStatusIfCurrentStatus(
+				payment.getRazorpayOrderId(), PaymentStatus.PENDING, resolvedStatus, razorpayPaymentId);
+ 
+		if (updatedRows == 0) {
+			log.info("Reconciliation: payment {} was already resolved before we could update it. Skipping.",
+					payment.getPaymentReference());
+			return;
+		}
+ 
+		log.info("Reconciliation: self-healed payment {} to {} (webhook never arrived).",
+				payment.getPaymentReference(), resolvedStatus);
+ 
+		if (resolvedStatus == PaymentStatus.SUCCESS) {
+			orderClient.handleSuccessfulPayment(payment.getOrderNumber());
+		} else {
+			orderClient.handleFailedPayment(payment.getOrderNumber());
+		}
 	}
 }

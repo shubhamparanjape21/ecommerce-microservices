@@ -1,11 +1,13 @@
 package com.japes.paymentservice.client;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import com.razorpay.Order;
+import com.razorpay.Payment;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 
@@ -46,5 +48,16 @@ public class RazorpayPaymentClient {
                 razorpayOrder.get("id"));
 
         return razorpayOrder;
+    }
+    
+    // Used by the reconciliation job to ask Razorpay directly what happened to
+    // an order when our webhook never arrived. This is a straight read against
+    // Razorpay's API - it never writes anything, so it's safe to call as often
+    // as reconciliation needs to.
+    public List<Payment> fetchPaymentsForOrder(String razorpayOrderId) throws RazorpayException {
+        log.info("Fetching payments from Razorpay for order {}", razorpayOrderId);
+        List<Payment> payments = razorpayClient.orders.fetchPayments(razorpayOrderId);
+        log.info("Razorpay returned {} payment attempt(s) for order {}", payments.size(), razorpayOrderId);
+        return payments;
     }
 }
